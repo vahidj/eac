@@ -1,0 +1,22 @@
+*.class
+*.log
+
+# sbt specific
+.cache
+.history
+.lib/
+<<<<<<< HEAD
+.idea/
+.settings/
+=======
+>>>>>>> 76a75082c92733e00203509d5fe8c63315d1b1c4
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+
+# Scala-IDE specific
+.scala_dependencies
+.worksheet
