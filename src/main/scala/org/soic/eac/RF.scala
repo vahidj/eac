@@ -1,6 +1,9 @@
 package org.soic.eac
 
-import org.apache.spark.ml.feature.StringIndexer
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.classification.RandomForestClassifier
+import org.apache.spark.ml.feature.{VectorAssembler, StringIndexer}
+import org.apache.spark.ml.tuning.{TrainValidationSplit, ParamGridBuilder, CrossValidator}
 import org.apache.spark.mllib.linalg._
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.RandomForest
@@ -8,6 +11,7 @@ import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.{Row, SQLContext}
+import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 
 
 /**
@@ -41,14 +45,29 @@ object RF {
     indexed = indexer.transform(indexed)
     indexer = new StringIndexer().setInputCol("safety").setOutputCol("safetyIndex").fit(indexed)
     indexed = indexer.transform(indexed)
-    indexer = new StringIndexer().setInputCol("acceptability").setOutputCol("acceptabilityIndex").fit(indexed)
+    indexer = new StringIndexer().setInputCol("acceptability").setOutputCol("label").fit(indexed)
     indexed = indexer.transform(indexed)
 
+    val transformedDf = indexed.drop("buying").
+      drop("maint").
+      drop("doors").
+      drop("persons").
+      drop("lug_boot").
+      drop("safety").
+      drop("acceptability")
+
+    var assembler = new VectorAssembler().setInputCols(Array("buyingIndex", "maintIndex", "doorsIndex", "personsIndex", "lug_bootIndex", "safetyIndex"))
+      .setOutputCol("features")
+
+    var output = assembler.transform(transformedDf)
+    println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+    output.foreach(x => println(x.toString()))
+    println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
     val transformed = indexed.map(x => new LabeledPoint(x.get(13).asInstanceOf[Double],
       new DenseVector(Array(x.get(7).asInstanceOf[Double], x.get(8).asInstanceOf[Double], x.get(9).asInstanceOf[Double],
         x.get(10).asInstanceOf[Double], x.get(11).asInstanceOf[Double], x.get(12).asInstanceOf[Double]))))
 
-    transformed.foreach(x => println(x.label))
+    //transformed.foreach(x => println(x.label))
 
     val splits = transformed.randomSplit(Array(0.7, 0.3))
     val (trainingData, testData) = (splits(0), splits(1))
@@ -57,24 +76,54 @@ object RF {
     //val traidningRdd = trainingData.javaRDD.map(row => new LabeledPoint(row.toString.spli
     val numClasses = 4
     val categoricalFeaturesInfo = Map[Int, Int]((0,4),(1,4),(2,4),(3,3),(4,3),(5,3))
-    val numTrees = 1 // Use more in practice.
+    val numTrees = 100 // Use more in practice.
     val featureSubsetStrategy = "auto" // Let the algorithm choose.
     val impurity = "gini"
-    val maxDepth = 1
+    val maxDepth = 5
     val maxBins = 32
 
-    val model = RandomForest.trainClassifier(trainingData.toJavaRDD(),
-      numClasses, categoricalFeaturesInfo, numTrees, featureSubsetStrategy, impurity, maxDepth, maxBins, 10)
-    val labelAndPreds = testData.map{
+    val nfolds: Int = 10
+    val rf = new RandomForestClassifier()
+
+    /*val rf = new RandomForestClassifier().setFeaturesCol("buyingIndex")
+      .setFeaturesCol("maintIndex")
+      .setFeaturesCol("doorsIndex")
+      .setFeaturesCol("personsIndex")
+      .setFeaturesCol("lug_bootIndex")
+      .setFeaturesCol("safetyIndex")
+      .setLabelCol("acceptabilityIndex")*/
+
+    val paramGrid = new ParamGridBuilder().addGrid(rf.numTrees, Array(1,5,10)).addGrid(rf.maxDepth, Array(2,4,6))
+      .addGrid(rf.maxBins, Array(30,60)).build()
+    //val paramGrid = new ParamGridBuilder().addGrid(rf.numTrees, Array(1,5,10,30,60,90)).addGrid(rf.maxDepth, Array(1,2,3,4,5,6,7,8,9,10))
+    //  .addGrid(rf.maxBins, Array(30, 60, 90)).build()
+    /*val trainValidationSplit = new TrainValidationSplit()
+      .setEstimator(rf)
+      .setEvaluator(new MulticlassClassificationEvaluator())
+      .setEstimatorParamMaps(paramGrid)*/
+
+    val cv = new CrossValidator().setEstimator(rf).setEvaluator(new MulticlassClassificationEvaluator())
+      .setEstimatorParamMaps(paramGrid)
+      .setEstimatorParamMaps(paramGrid)
+      .setNumFolds(nfolds)
+
+    //val model = RandomForest.trainClassifier(trainingData.toJavaRDD(),
+    //  numClasses, categoricalFeaturesInfo, numTrees, featureSubsetStrategy, impurity, maxDepth, maxBins, 10)
+
+    //println("++++++++++++++++++++++++++++++++++++++++\n"+cv.fit(output).bestModel.params.toString())
+    cv.fit(output).bestModel.params.foreach(x => println(x))
+
+    /*val labelAndPreds = testData.map{
       point => val prediction = model.predict(point.features)
         println(point.label + " " + prediction)
         (point.label, prediction)
-    }
+    }*/
 
-    val testErr = labelAndPreds.filter(r => r._1 != r._2).count() * 1.0/testData.count()
+    //println(labelAndPreds.filter(r => r._1 != r._2).count())
+    //val testErr = labelAndPreds.filter(r => r._1 != r._2).count() * 1.0/testData.count()
 
-    println("Test Error = " + testErr)
-    println("Learned classification forest model:\n" + model.toDebugString)
+    //println("Test Error = " + testErr)
+    //println("Learned classification forest model:\n" + model.toDebugString)
     /*val data = rawData.map{line =>
         val values = line.split(",")
         val featureVector = Vectors.dense(1)
