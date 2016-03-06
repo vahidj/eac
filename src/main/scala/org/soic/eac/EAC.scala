@@ -2,13 +2,25 @@ package org.soic.eac
 
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
+import org.apache.spark.ml.classification.{ProbabilisticClassificationModel, ProbabilisticClassifier}
+import org.apache.spark.ml.param.ParamMap
+import org.apache.spark.ml.util.{MLWritable, Identifiable}
+import org.apache.spark.sql.DataFrame
+
+final class EAC(override val uid: String)
+  extends ProbabilisticClassifier[Vector, EAC, EACModel]
+  with EACParams with DefaultParamsWritable
+{
+  def this() = this(Identifiable.randomUID("eac"))
+  override protected def train(dataset: DataFrame): EACModel = {
+
+  }
+  override def copy(extra: ParamMap): EAC = defaultCopy(extra)
+}
 
 object EAC {
-  
-  def main(args: Array[String]) = {
-    val conf = new SparkConf().setAppName("EAC").setMaster("local")
-    val sc = new SparkContext(conf)
-    val test = sc.textFile("food.txt")
-    test.flatMap { line => line.split(" ") }.map {word => (word, 1)}.reduceByKey(_ + _).saveAsTextFile("food.count.txt")
-  }
+
 }
+
+final class EACModel private[ml] () extends ProbabilisticClassificationModel[Vector, EACModel]
+with EACParams with MLWritable {}
