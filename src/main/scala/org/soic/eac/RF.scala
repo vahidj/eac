@@ -18,6 +18,7 @@ import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
   * Created by vjalali on 2/27/16.
   */
 object RF {
+  System.setProperty("hadoop.home.dir", "c:/winutil")
   def makeLibSVMLine(line: String): String =
   {
     val fields = line.split(",")
@@ -112,6 +113,19 @@ object RF {
 
     //println("++++++++++++++++++++++++++++++++++++++++\n"+cv.fit(output).bestModel.params.toString())
     cv.fit(output).bestModel.params.foreach(x => println(x))
+    
+    
+    // Extracting best model params
+    
+    val cvModel= cv.fit(output)
+    val ParamMap = {cvModel.getEstimatorParamMaps
+           .zip(cvModel.avgMetrics)
+           .maxBy(_._2)
+           ._1}
+    println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+    println("Best Model params\n"+ ParamMap)
+    
+    
 
     /*val labelAndPreds = testData.map{
       point => val prediction = model.predict(point.features)
