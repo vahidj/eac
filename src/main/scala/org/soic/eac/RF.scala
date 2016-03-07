@@ -28,7 +28,16 @@ object RF {
 
   def main(args: Array[String]) = {
     val sc: SparkContext = new SparkContext()
-    val rawData = sc.textFile("/Users/vjalali/Documents/Acad/eac/datasets/careval/car.data")
+    val filePathAdult="/Users/vjalali/Documents/Acad/eac/datasets/adult/adult.data"
+    val filePathCar= "/Users/vjalali/Documents/Acad/eac/datasets/careval/car.data"
+    val schemaStringAdult = "age workclass fnlwgt education education-num marital occupation relationship race sex capital-gain capital-loss hours-per-week country income"
+    val schemaStringCar= "buying maint doors persons lug_boot safety acceptability"
+    val readr= new adultReader
+    val indexed = readr.Indexed(filePathAdult, schemaStringAdult,sc)
+    val transformed = readr.DFTransformed(indexed)
+    val output = readr.Output(indexed)
+    
+    /*val rawData = sc.textFile("/Users/vjalali/Documents/Acad/eac/datasets/careval/car.data")
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
     val schemaString = "buying maint doors persons lug_boot safety acceptability"
     val schema = StructType(schemaString.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
@@ -67,7 +76,7 @@ object RF {
     val transformed = indexed.map(x => new LabeledPoint(x.get(13).asInstanceOf[Double],
       new DenseVector(Array(x.get(7).asInstanceOf[Double], x.get(8).asInstanceOf[Double], x.get(9).asInstanceOf[Double],
         x.get(10).asInstanceOf[Double], x.get(11).asInstanceOf[Double], x.get(12).asInstanceOf[Double]))))
-
+    */
     //transformed.foreach(x => println(x.label))
 
     val splits = transformed.randomSplit(Array(0.7, 0.3))
