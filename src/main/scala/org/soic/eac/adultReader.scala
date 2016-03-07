@@ -17,7 +17,7 @@ import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
 
-
+// reads adult data set
 class adultReader extends reader {
    def Indexed(FilePath:String, schemaString:String, sc: SparkContext): DataFrame= {
     val rawData = sc.textFile(FilePath)

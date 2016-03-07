@@ -16,6 +16,7 @@ import org.apache.spark.sql.{Row, SQLContext}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
+// reads car dataset
 class carReader extends reader {
   
   def Output(indexed: DataFrame): DataFrame= {
