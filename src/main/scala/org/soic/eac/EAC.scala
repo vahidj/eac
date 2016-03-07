@@ -13,15 +13,16 @@ import org.apache.spark.ml.classification.{ProbabilisticClassificationModel, Pro
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.util.{MLWritable, Identifiable}
 import org.apache.spark.sql.{SQLContext, DataFrame}
+import Array.range
 
-class EAC private(private var lambda: Double)
+class EAC private(private var k: Int)
   extends Serializable with Logging {
-  def setLambda(lambda: Double): EAC = {
-    this.lambda = lambda
+  def setK(k: Int): EAC = {
+    this.k = k
     this
   }
 
-  def getLambda: Double = lambda
+  def getK: Int = k
   private var data: RDD[LabeledPoint] = null
   private var dataWithIndex: RDD[(Long, LabeledPoint)] = null
   //each element in the list contains the distance between pairs of values of the corrsponding feature
@@ -30,6 +31,26 @@ class EAC private(private var lambda: Double)
   private var distances = new util.HashMap[(Int, Int), Double]
   //2D array, indices represent indices of elements in data, each row represents cases in data sorted by their ascending distance to the corresponding case
   private var neighbors = Array.ofDim[Int](data.count().asInstanceOf[Int], data.count().asInstanceOf[Int] - 1)
+
+  def msort(array: List[Int], baseIndex:Int): List[Int] = {
+    val n = array.length/2
+    if (n == 0) array
+    else{
+      def merge(array1: List[Int], array2: List[Int]): List[Int] = (array1, array2) match {
+        case (Nil, array2) => array2
+        case (array1, Nil) => array1
+        case (x :: array11, y :: array21) =>
+          if (distances.get(baseIndex, x) < distances.get(baseIndex,y)) x :: merge(array11, array2)
+          else y :: merge(array1, array21)
+      }
+      val (left, right) = array splitAt(n)
+      merge(msort(left,baseIndex), msort(right,baseIndex))
+    }
+  }
+  def getNearestNeighbors(i:Int): Array[Int] ={
+    var result = range(0,dataWithIndex.count().asInstanceOf[Int]).toList
+    msort(result, i).toArray[Int]
+  }
 
   def getDistance(i:Long, j:Long): Double = {
     var distance: Double = 0
@@ -115,12 +136,12 @@ class EAC private(private var lambda: Double)
     }
 
     //the following section list nearest neighbors for all cases in the domain
-    //for (i <- 0 until dataWithIndex.count().asInstanceOf[Int]){
-    //  for (j <- i + 1 until dataWithIndex.count().asInstanceOf[Int]){
-    //    neighbors(i) = getNearest
-    //  }
-    //}
-    new EACModel(data)
+    for (i <- 0 until dataWithIndex.count().asInstanceOf[Int]){
+      for (j <- i + 1 until dataWithIndex.count().asInstanceOf[Int]){
+        neighbors(i) = getNearestNeighbors(i)
+      }
+    }
+    new EACModel(dataWithIndex, mizan, k)
   }
 }
 
@@ -130,10 +151,40 @@ object EAC {
   }
 }
 
-class EACModel private[spark] (trainingSet: RDD[LabeledPoint]) extends ClassificationModel with Serializable with Saveable{
-  override def predict(testData: RDD[Vector]): RDD[Double] = {
+class EACModel private[spark] (trainingSet: RDD[(Long, LabeledPoint)], inputMizan: util.ArrayList[util.HashMap[(Double, Double), Int]], inputK: Int)
+  extends ClassificationModel with Serializable with Saveable{
+  private val dataWithIndex: RDD[(Long, LabeledPoint)] = trainingSet
+  private val mizan = inputMizan
+  private val k = inputK
 
-    null
+
+  def getDistance(c1:Vector, c2:Vector): Double = {
+    var distance: Double = 0
+    var featureCounter = 0
+    c1.toArray.foreach(f1 => {
+      val f2 = c2.toArray(featureCounter)
+      val smaller = Math.min(f1, f2)
+      val greater = Math.max(f1,f2)
+      if (mizan.get(featureCounter).containsKey(smaller, greater))
+        distance = scala.math.pow(mizan.get(featureCounter).get((smaller, greater)), 2)
+      featureCounter += 1
+    })
+    math.sqrt(distance)
+  }
+
+  def getTopNeighbors(t:Vector): List[Int] = {
+    var result = List[(Int, Double)]()
+    this.dataWithIndex.foreach(r => {
+      val tempDist = getDistance(t, r._2.features)
+      result = result ::: List((r._1.asInstanceOf[Int], tempDist))
+    })
+    result.sortBy(_._2).map(_._1).take(this.k)
+  }
+
+  override def predict(testData: RDD[Vector]): RDD[Double] = {
+    testData.map(t => {
+      getTopNeighbors(t).map(dataWithIndex.lookup(_)(0).label).groupBy(identity).maxBy(_._2.size)._1
+    })
   }
 
   override def predict(testData: Vector): Double = {
