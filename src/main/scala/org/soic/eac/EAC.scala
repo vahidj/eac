@@ -26,6 +26,8 @@ class EAC private(private var lambda: Double)
   private var dataWithIndex: RDD[(Long, LabeledPoint)] = null
   //each element in the list contains the distance between pairs of values of the corrsponding feature
   private var mizan = new util.ArrayList[util.HashMap[(Double, Double), Int]](data.first().features.size)
+  //2D array, indices represent indices of elements in data, each element represents distances between the case represented by row and column
+  private var distances = new util.HashMap[(Int, Int), Double]
   //2D array, indices represent indices of elements in data, each row represents cases in data sorted by their ascending distance to the corresponding case
   private var neighbors = Array.ofDim[Int](data.count().asInstanceOf[Int], data.count().asInstanceOf[Int] - 1)
 
@@ -78,6 +80,7 @@ class EAC private(private var lambda: Double)
     val featureIt = featureStat.iterator()
     var featureCounter = 0
     val classValsIt = classStat.keySet().iterator()
+    //the following while loop generates VDM between all possible pairs of values for all features in the domain
     while(featureIt.hasNext){
       val featureValues = featureIt.next().keySet().toArray()
       for (i <- 0 until featureValues.length){
@@ -103,6 +106,20 @@ class EAC private(private var lambda: Double)
       }
     }
 
+    //the following section generates distances between all pairs of cases in the underlying domain
+    for (i <- 0 until dataWithIndex.count().asInstanceOf[Int]){
+      for (j <- i + 1 until dataWithIndex.count().asInstanceOf[Int]){
+        //I'll put the smaller element as the first element of the tuple.
+        distances.put((i,j), getDistance(i,j))
+      }
+    }
+
+    //the following section list nearest neighbors for all cases in the domain
+    //for (i <- 0 until dataWithIndex.count().asInstanceOf[Int]){
+    //  for (j <- i + 1 until dataWithIndex.count().asInstanceOf[Int]){
+    //    neighbors(i) = getNearest
+    //  }
+    //}
     new EACModel(data)
   }
 }
