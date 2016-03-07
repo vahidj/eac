@@ -151,7 +151,7 @@ object EAC {
   }
 }
 
-class EACModel private[spark] (trainingSet: RDD[(Long, LabeledPoint)], inputMizan: util.ArrayList[util.HashMap[(Double, Double), Int]], inputK: Int)
+class EACModel (trainingSet: RDD[(Long, LabeledPoint)], inputMizan: util.ArrayList[util.HashMap[(Double, Double), Int]], inputK: Int)
   extends ClassificationModel with Serializable with Saveable{
   private val dataWithIndex: RDD[(Long, LabeledPoint)] = trainingSet
   private val mizan = inputMizan

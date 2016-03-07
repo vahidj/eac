@@ -32,8 +32,8 @@ object RF {
     val filePathCar= "/Users/vjalali/Documents/Acad/eac/datasets/careval/car.data"
     val schemaStringAdult = "age workclass fnlwgt education education-num marital occupation relationship race sex capital-gain capital-loss hours-per-week country income"
     val schemaStringCar= "buying maint doors persons lug_boot safety acceptability"
-    val readr= new adultReader
-    val indexed = readr.Indexed(filePathAdult, schemaStringAdult,sc)
+    val readr= new carReader // new adultReader
+    val indexed = readr.Indexed(filePathCar, schemaStringCar,sc)
     val transformed = readr.DFTransformed(indexed)
     val output = readr.Output(indexed)
     
@@ -127,25 +127,33 @@ object RF {
     // Extracting best model params
     
     val cvModel= cv.fit(output)
-    val ParamMap = {cvModel.getEstimatorParamMaps
+    val paramMap = {cvModel.getEstimatorParamMaps
            .zip(cvModel.avgMetrics)
            .maxBy(_._2)
            ._1}
     println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-    println("Best Model params\n"+ ParamMap)
-    
-    
+    println("Best Model params\n"+ paramMap.toSeq.filter(_.param.name == "maxBins")(0).value)
 
-    /*val labelAndPreds = testData.map{
+    //paramMap.toSeq.filter(_.param.name == "maxBins")(0).value
+    
+    val model = RandomForest.trainClassifier(trainingData.toJavaRDD(),
+      numClasses, categoricalFeaturesInfo,
+      paramMap.toSeq.filter(_.param.name == "numTrees")(0).value.asInstanceOf[Int],
+      featureSubsetStrategy, impurity,
+      paramMap.toSeq.filter(_.param.name == "maxDepth")(0).value.asInstanceOf[Int],
+      paramMap.toSeq.filter(_.param.name == "maxBins")(0).value.asInstanceOf[Int], 10)
+
+
+    val labelAndPreds = testData.map{
       point => val prediction = model.predict(point.features)
-        println(point.label + " " + prediction)
+        //println(point.label + " " + prediction)
         (point.label, prediction)
-    }*/
+    }
 
     //println(labelAndPreds.filter(r => r._1 != r._2).count())
-    //val testErr = labelAndPreds.filter(r => r._1 != r._2).count() * 1.0/testData.count()
+    val testErr = labelAndPreds.filter(r => r._1 != r._2).count() * 1.0/testData.count()
 
-    //println("Test Error = " + testErr)
+    println("Test Error = " + testErr)
     //println("Learned classification forest model:\n" + model.toDebugString)
     /*val data = rawData.map{line =>
         val values = line.split(",")
