@@ -47,8 +47,8 @@ object KNNTester {
     val maxDepth = 5
     val maxBins = 32
 
-    val nfolds: Int = 10
-    val knn = new EAC(2, transformed, testData)
+    val nfolds: Int = 20
+    val knn = new EAC(1, transformed, testData)
 
     //val paramGrid = new ParamGridBuilder().addGrid(knn.k, Array(1,2,3,4,5,6,7)).build()
     //val paramGrid = new ParamGridBuilder().addGrid(rf.numTrees, Array(1,5,10,30,60,90)).addGrid(rf.maxDepth, Array(1,2,3,4,5,6,7,8,9,10))
@@ -62,8 +62,8 @@ object KNNTester {
     //  .setEstimatorParamMaps(paramGrid)
     //  .setNumFolds(nfolds)
 
-    //val model = RandomForest.trainClassifier(trainingData.toJavaRDD(),
-    //  numClasses, categoricalFeaturesInfo, numTrees, featureSubsetStrategy, impurity, maxDepth, maxBins, 10)
+    val model = RandomForest.trainClassifier(trainingData.toJavaRDD(),
+      numClasses, categoricalFeaturesInfo, numTrees, featureSubsetStrategy, impurity, maxDepth, maxBins, 10)
 
     //println("++++++++++++++++++++++++++++++++++++++++\n"+cv.fit(output).bestModel.params.toString())
     //cv.fit(output).bestModel.params.foreach(x => println(x))
@@ -89,12 +89,16 @@ object KNNTester {
         //println(point.label + " " + prediction)
         (point.label, prediction)
     }*/
+    val labeleAndPredsRF = testData.map{
+      point => val prediction = model.predict(point.features)
+        (point.label, prediction)
+    }
     val labelAndPreds = knn.getPredAndLabels()
     //println(labelAndPreds)
     //println(labelAndPreds.filter(r => r._1 != r._2).count())
     val testErr = labelAndPreds.filter(r => r._1 != r._2).length * 1.0/testData.count()
-
-    println("Test Error = " + testErr)
+    val testErrRF = labeleAndPredsRF.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
+    println("KNN Test Error = " + testErr + " RF test error = " + testErrRF)
     //println("Learned classification forest model:\n" + model.toDebugString)
     /*val data = rawData.map{line =>
         val values = line.split(",")

@@ -15,6 +15,8 @@ import org.apache.spark.ml.util.{MLWritable, Identifiable}
 import org.apache.spark.sql.{SQLContext, DataFrame}
 import Array.range
 import scala.collection._
+import scala.collection.mutable.ListBuffer
+import scala.util.Random
 
 class EAC(private var k: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoint])
   extends Serializable with Logging {
@@ -28,6 +30,7 @@ class EAC(private var k: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoin
   private var dataWithIndex: RDD[(Long, LabeledPoint)] = data.zipWithIndex().map{case (k, v) => (v, k)}
   //each element in the list contains the distance between pairs of values of the corrsponding feature
   private var mizan = List.fill(this.data.first().features.size)(scala.collection.mutable.Map[(Double, Double),  Double]())
+  private var ruleBase = List.fill(this.data.count().asInstanceOf[Int]*(this.data.count().asInstanceOf[Int] - 1)/2)(scala.collection.mutable.Map[(Double, Double),  Double]())
   //private var mizan = List[scala.collection.mutable.Map[(Double, Double), Double]]()//List[util.HashMap[(Double, Double), Int]]()
   //2D array, indices represent indices of elements in data, each element represents distances between the case represented by row and column
   private var distances = scala.collection.mutable.Map[(Int, Int), Double]()
@@ -90,17 +93,97 @@ class EAC(private var k: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoin
     result
   }
 
+
+  def getTopKWithQSel(inputList: List[(Int, Double)], inputK: Int): List[(Int, Double)] = {
+    val pivot = quickSelect(inputList.to[ListBuffer], inputK)
+    var result = List[(Int, Double)]()
+    inputList.foreach(r => {
+      if (r._2 < pivot)
+        result = List(r) ::: result
+      else if (r._2 == pivot)
+        result = result ::: List(r)
+    })
+    result.take(inputK)
+  }
+
+  def getTopK(inputList: List[(Int, Double)], inputK: Int): List[(Int, Double)] = {
+    //println(inputList.toString())
+    var result = List[(Int, Double)]()
+    inputList.foreach(r => {
+      var left = 0
+      var right = result.size -1
+      if (result.size == 0)
+        result = List(r)
+      else if (result.size < inputK || result(result.size - 1)._2 > r._2) {
+        while (left < right) {
+          //println(left + " " + right)
+          val mid = left + (right - left) / 2
+          if (result(mid)._2 == r._2)
+            left = mid
+            right = mid
+          if (result(mid)._2 < r._2)
+            left = mid + 1
+          else if (result(mid)._2 > r._2)
+            right = mid - 1
+        }
+        result = result.take(left) ::: List(r) ::: result.drop(left)
+        result = result.take(inputK)
+      }
+    })
+    //println("+++++++++++++++++++++++++++++++++++++++++++" + result.size + "++++++++++++++++++++++++++++++++++++++++")
+    //println(result.toString())
+    result
+  }
+
+  def quickSelect(inputList: ListBuffer[(Int, Double)], n: Int, rand: Random = new Random): Double = {
+    if (inputList == null)
+      throw new Exception();
+    var from = 0
+    var to = inputList.size - 1
+    while(from < to){
+      var r = from
+      var w = to
+      val mid = inputList((r+w)/2)._2
+      while(r < w){
+        if (inputList(r)._2 >= mid){
+          val tmp = inputList(w)
+          inputList(w) = inputList(r)
+          inputList(r) = tmp
+          w = w - 1
+        }
+        else {
+          r = r + 1
+        }
+      }
+
+      if (inputList(r)._2 > mid)
+        r = r - 1
+
+      if (n <= r){
+        to = r
+      } else {
+        from = r + 1
+      }
+    }
+
+    inputList(n)._2
+  }
+
   def getTopNeighbors(t:Vector): List[Int] = {
-    this.dataWithIndex.map(r => {
+    /*getTopKWithQSel(this.dataWithIndex.map(r => {
       (r._1.asInstanceOf[Int], getDistance(t, r._2.features))
-    }).sortBy(_._2).map(_._1).take(this.k).toList
+    }).collect().toList, this.k).map(_._1)*/
+    //sortBy(_._2).map(_._1).take(this.k).toList
     /*var result = List[(Int, Double)]()
     this.dataWithIndex.foreach(r => {
       val tempDist = getDistance(t, r._2.features)
-      println(tempDist)
+      //println(tempDist)
       result = result ::: List((r._1.asInstanceOf[Int], tempDist))
     })
     result.sortBy(_._2).map(_._1).take(this.k)*/
+    this.dataWithIndex.map(r => (r._1.asInstanceOf[Int], getDistance(t, r._2.features))).sortBy(_._2).map(_._1).take(this.k).toList
+    //val tmp = this.dataWithIndex.map(r => (r._1.asInstanceOf[Int], getDistance(t, r._2.features))).sortBy(_._2).collect().toList
+    //tmp.filter(_._2 <= tmp(this.k)._2).map(_._1)
   }
 
   def predict(testData: Vector): Double = {
@@ -118,7 +201,6 @@ class EAC(private var k: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoin
       featureClassStat = featureClassStat ::: List(tmp2)
     }
     //println(featureClassStat.toString())
-    null
     /*this.dataWithIndex = data.zipWithIndex().map{case (k,v) => (v, k)}
     //key: class value, value: how many records have this class value
     var classStat = scala.collection.mutable.Map[Double, Int]()
@@ -216,6 +298,9 @@ class EAC(private var k: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoin
         neighbors(i) = getNearestNeighbors(i)
       }
     }*/
+    println("Started forming rules")
+
+    println("Started building rule mizan")
     println("IS ABOUT TO BUILD THE MODEL")
     new EACModel(k)
   }
