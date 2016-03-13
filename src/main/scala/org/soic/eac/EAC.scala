@@ -30,7 +30,9 @@ class EAC(private var k: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoin
   private var dataWithIndex: RDD[(Long, LabeledPoint)] = data.zipWithIndex().map{case (k, v) => (v, k)}
   //each element in the list contains the distance between pairs of values of the corrsponding feature
   private var mizan = List.fill(this.data.first().features.size)(scala.collection.mutable.Map[(Double, Double),  Double]())
-  private var ruleBase = List.fill(this.data.count().asInstanceOf[Int]*(this.data.count().asInstanceOf[Int] - 1)/2)(scala.collection.mutable.Map[(Double, Double),  Double]())
+  private var ruleMizan = List.fill(this.data.first().features.size)(scala.collection.mutable.Map[((Double, Double), (Double,Double)),  Double]())
+  private var ruleBase: RDD[((Double, Double), List[(Double, Double)])] = dataWithIndex.cartesian(dataWithIndex).filter{case (a,b) => a._1 != b._1}
+    .map{case ((a,b),(c,d)) => ((b.label, d.label), (b.features.toArray.toList zip d.features.toArray.toList))}
   //private var mizan = List[scala.collection.mutable.Map[(Double, Double), Double]]()//List[util.HashMap[(Double, Double), Int]]()
   //2D array, indices represent indices of elements in data, each element represents distances between the case represented by row and column
   private var distances = scala.collection.mutable.Map[(Int, Int), Double]()
@@ -187,6 +189,7 @@ class EAC(private var k: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoin
   }
 
   def predict(testData: Vector): Double = {
+    //kNN
     getTopNeighbors(testData).map(dataWithIndex.lookup(_)(0).label).groupBy(identity).maxBy(_._2.size)._1
   }
 
@@ -299,7 +302,65 @@ class EAC(private var k: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoin
       }
     }*/
     println("Started forming rules")
+    //var ruleBase = dataWithIndex.cartesian(dataWithIndex).filter{case (a,b) => a._1 != b._1}
+    //  .map{case ((a,b),(c,d)) => ((b.label, d.label), (b.features.toArray.toList zip d.features.toArray.toList))}
+    val ruleClassStat = ruleBase.map(x => x._1).countByValue()
 
+    var ruleFeatureStat = List[Map[(Double, Double), Long]]()
+    var ruleFeatureClassStat = List[Map[((Double, Double), (Double, Double)), Long]]()
+    for (i <- 0 until data.first().features.size){
+      val tmp = ruleBase.map(x => x._2(i)).countByValue()
+      ruleFeatureStat =  ruleFeatureStat ::: List(tmp)
+      val tmp2 = ruleBase.map(x => (x._2(i), x._1)).countByValue()
+      ruleFeatureClassStat = ruleFeatureClassStat ::: List(tmp2)
+    }
+
+
+
+    val ruleFeatureIt = ruleFeatureStat.iterator
+    var ruleFeatureCounter = 0
+    //the following while loop generates VDM between all possible pairs of values for all features in the domain
+    while(ruleFeatureIt.hasNext){
+      //println("feature iterator")
+      val ruleFeatureValues = ruleFeatureIt.next.keySet.toArray
+      for (i <- 0 until ruleFeatureValues.length){
+        for (j <- i+1 until ruleFeatureValues.length){
+          val v1 = ruleFeatureValues(i)
+          val v2 = ruleFeatureValues(j)
+          val v1cnt = ruleFeatureStat(ruleFeatureCounter)(v1).toInt.toDouble
+          val v2cnt = ruleFeatureStat(ruleFeatureCounter)(v2).toInt.toDouble
+          var vdm = 0.0
+          val ruleClassValsIt = ruleClassStat.keySet.iterator
+          while(ruleClassValsIt.hasNext){
+            val ruleClassVal = ruleClassValsIt.next()
+            val tmp1 = ruleFeatureClassStat(ruleFeatureCounter).getOrElse(((v1, ruleClassVal)), 0L).toInt.toDouble
+            val tmp2 = ruleFeatureClassStat(ruleFeatureCounter).getOrElse(((v2, ruleClassVal)), 0L).toInt.toDouble
+            vdm += Math.abs( tmp1 / v1cnt -  tmp2 / v2cnt)
+            //println(tmp1 + " " + tmp2 + " " + " " + tmp1 + " " +tmp2 +" "+ vdm)
+          }
+          //I'll put the smaller element as the first element of the tuple.
+          //this makes looking up a tuple in mizan easier in future (meaning that if I want to check the
+          // distance between two values, I'll always put the smaller value as the first element in the look up as well)
+
+          //println(featureClassStat.toString())
+          ruleMizan(ruleFeatureCounter)((v1,v2)) = vdm
+          //ruleMizan(featureCounter)((v2,v1)) = vdm
+          //if (v1 <= v2) {
+          //  ruleMizan(featureCounter)((v1, v2)) = vdm
+            //println(vdm)
+          //}
+          //else {
+          //  ruleMizan(featureCounter)((v2, v1)) = vdm
+            //println(vdm)
+          //}
+        }
+      }
+      ruleFeatureCounter += 1
+    }
+
+
+    //println(ruleMizan.toString())
+    //System.exit(0)
     println("Started building rule mizan")
     println("IS ABOUT TO BUILD THE MODEL")
     new EACModel(k)
