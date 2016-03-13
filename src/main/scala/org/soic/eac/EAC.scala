@@ -189,6 +189,10 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
     rb.map(r => (r._1, getRuleDistance(r._2, antecedent))).sortBy(_._2).map(_._1).take(this.rno).toList
   }
 
+  def persistNearestNeighbors(): Unit = {
+    this.data.map()
+  }
+
   def getTopNeighbors(t:Vector): List[Int] = {
     /*getTopKWithQSel(this.dataWithIndex.map(r => {
       (r._1.asInstanceOf[Int], getDistance(t, r._2.features))

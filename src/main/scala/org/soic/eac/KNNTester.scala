@@ -49,7 +49,7 @@ object KNNTester {
     val maxBins = 32
 
     val nfolds: Int = 20
-    val knn = new EAC(1, 5, transformed, testData)
+    val knn = new EAC(1, 5, trainingData, testData)
 
     //val paramGrid = new ParamGridBuilder().addGrid(knn.k, Array(1,2,3,4,5,6,7)).build()
     //val paramGrid = new ParamGridBuilder().addGrid(rf.numTrees, Array(1,5,10,30,60,90)).addGrid(rf.maxDepth, Array(1,2,3,4,5,6,7,8,9,10))
