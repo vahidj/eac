@@ -190,7 +190,7 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
   }
 
   def persistNearestNeighbors(): Unit = {
-    this.data.map()
+    //this.data.map()
   }
 
   def getTopNeighbors(t:Vector): List[Int] = {
