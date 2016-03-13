@@ -12,7 +12,7 @@ import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.{Row, SQLContext}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-
+import org.soic.eac.EACConfig._
 
 /**
   * Created by vjalali on 2/27/16.
@@ -29,7 +29,8 @@ object KNNTester {
   def main(args: Array[String]) = {
     val sc: SparkContext = new SparkContext()
     val filePathAdult="/Users/vjalali/Documents/Acad/eac/datasets/adult/adult.data"
-    val filePathCar= "/Users/vjalali/Documents/Acad/eac/datasets/careval/car.data"
+    println(EACConfig.BASEPATH)
+    val filePathCar= EACConfig.BASEPATH + "datasets/careval/car.data"
     val schemaStringAdult = "age workclass fnlwgt education education-num marital occupation relationship race sex capital-gain capital-loss hours-per-week country income"
     val schemaStringCar= "buying maint doors persons lug_boot safety acceptability"
     val readr= new carReader // new adultReader
@@ -48,7 +49,7 @@ object KNNTester {
     val maxBins = 32
 
     val nfolds: Int = 20
-    val knn = new EAC(1, transformed, testData)
+    val knn = new EAC(1, 5, transformed, testData)
 
     //val paramGrid = new ParamGridBuilder().addGrid(knn.k, Array(1,2,3,4,5,6,7)).build()
     //val paramGrid = new ParamGridBuilder().addGrid(rf.numTrees, Array(1,5,10,30,60,90)).addGrid(rf.maxDepth, Array(1,2,3,4,5,6,7,8,9,10))

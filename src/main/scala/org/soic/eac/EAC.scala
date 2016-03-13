@@ -18,7 +18,7 @@ import scala.collection._
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
-class EAC(private var k: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoint])
+class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoint])
   extends Serializable with Logging {
   def setK(k: Int): EAC = {
     this.k = k
@@ -57,6 +57,20 @@ class EAC(private var k: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoin
   def getNearestNeighbors(i:Int): Array[Int] ={
     var result = range(0,data.count().asInstanceOf[Int]).toList
     msort(result, i).toArray[Int]
+  }
+
+  def getRuleDistance(r1: List[(Double, Double)], r2: List[(Double, Double)]): Double = {
+    var distance: Double = 0
+    var featureCounter = 0
+    r1.foreach(f1 => {
+      val f2 = r2(featureCounter)
+      if (ruleMizan(featureCounter).contains(f1, f2))
+        distance = scala.math.pow(ruleMizan(featureCounter)((f1, f2)), 2)
+      else if (ruleMizan(featureCounter).contains(f2, f1))
+        distance = scala.math.pow(ruleMizan(featureCounter)((f2, f1)), 2)
+      featureCounter += 1
+    })
+    math.sqrt(distance)
   }
 
   def getDistance(i:Long, j:Long): Double = {
@@ -171,6 +185,10 @@ class EAC(private var k: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoin
     inputList(n)._2
   }
 
+  def getTopRules(rb: RDD[((Double, Double), List[(Double, Double)])], antecedent: List[(Double, Double)]): List[(Double, Double)] = {
+    rb.map(r => (r._1, getRuleDistance(r._2, antecedent))).sortBy(_._2).map(_._1).take(this.rno).toList
+  }
+
   def getTopNeighbors(t:Vector): List[Int] = {
     /*getTopKWithQSel(this.dataWithIndex.map(r => {
       (r._1.asInstanceOf[Int], getDistance(t, r._2.features))
@@ -191,6 +209,15 @@ class EAC(private var k: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoin
   def predict(testData: Vector): Double = {
     //kNN
     getTopNeighbors(testData).map(dataWithIndex.lookup(_)(0).label).groupBy(identity).maxBy(_._2.size)._1
+    //EAC
+    /*val baseCaseIndices = getTopNeighbors(testData)
+    var result = 0.0
+    baseCaseIndices.map(r => {
+      val baseLabel = dataWithIndex.lookup(r)(0).label
+      val antecedent = dataWithIndex.lookup(r)(0).features.toArray.zip(testData.toArray).toList
+      val rulesToConsider = ruleBase.filter{case (a, b) => a._1 == baseLabel}
+      getTopRules(rulesToConsider, antecedent).map(_._2).groupBy(identity).maxBy(_._2.size)._1
+    }).groupBy(identity).maxBy(_._2.size)._1*/
   }
 
   def train(): EACModel = {
