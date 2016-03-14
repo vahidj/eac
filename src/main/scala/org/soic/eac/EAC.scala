@@ -187,10 +187,10 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
   }
 
   def getTopRules(rb: RDD[(Long, ((Double, Double), List[(Double, Double)]))], antecedent: List[(Double, Double)]): List[Int] = {
-    getTopKWithQSel(rb.map(r => {
+    /*getTopKWithQSel(rb.map(r => {
       (r._1.asInstanceOf[Int], getRuleDistance(antecedent, r._2._2))
-    }).collect().toList, this.rno).map(_._1)
-    //rb.map(r => (r._1, getRuleDistance(r._2, antecedent))).sortBy(_._2).map(_._1).take(this.rno).toList
+    }).collect().toList, this.rno).map(_._1)*/
+    rb.map(r => (r._1.asInstanceOf[Int], getRuleDistance(r._2._2, antecedent))).sortBy(_._2).map(_._1).take(this.rno).toList
   }
 
   def persistNearestNeighbors(): RDD[(Int, List[Int])] = {
