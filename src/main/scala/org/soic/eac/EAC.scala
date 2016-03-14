@@ -18,7 +18,7 @@ import scala.collection._
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
-class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoint])
+class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoint], fullData: RDD[LabeledPoint])
   extends Serializable with Logging {
   def setK(k: Int): EAC = {
     this.k = k
@@ -190,7 +190,12 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
   }
 
   def persistNearestNeighbors(): Unit = {
-    //this.data.map()
+    this.fullData.zipWithIndex().map{case (k, v) => (v, k)}.map(r => (r._1.asInstanceOf[Int], getSortedNeighbors(r._2.features)))
+      .saveAsTextFile("neighbors.txt")
+  }
+
+  def getSortedNeighbors(t: Vector): List[Int] = {
+    this.dataWithIndex.map(r => (r._1.asInstanceOf[Int], getDistance(t, r._2.features))).sortBy(_._2).map(_._1).collect().toList
   }
 
   def getTopNeighbors(t:Vector): List[Int] = {
