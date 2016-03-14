@@ -18,7 +18,7 @@ import scala.collection._
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
-class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoint])
+class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoint])
   extends Serializable with Logging {
   def setK(k: Int): EAC = {
     this.k = k
@@ -34,6 +34,8 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
   private val ruleBase: RDD[((Double, Double), List[(Double, Double)])] = dataWithIndex.cartesian(dataWithIndex).filter{case (a,b) => a._1 != b._1}
     .map{case ((a,b),(c,d)) => ((b.label, d.label), (b.features.toArray.toList zip d.features.toArray.toList))}
   private val ruleBaseWithIndex = ruleBase.zipWithIndex().map{case (k,v) => (v,k)}
+  private var ruleBase4: RDD[((Double, Double), List[(Double, Double)])] = null
+  private var ruleBase4WithIndex: RDD[(Long, ((Double, Double), List[(Double, Double)]))] = null
   //private var mizan = List[scala.collection.mutable.Map[(Double, Double), Double]]()//List[util.HashMap[(Double, Double), Int]]()
   //2D array, indices represent indices of elements in data, each element represents distances between the case represented by row and column
   private var distances = scala.collection.mutable.Map[(Int, Int), Double]()
@@ -105,9 +107,10 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
   }
 
   def getPredAndLabels(): List[(Double,Double)] = {
-    var result = List[(Double,Double)]()
-    testData.collect().foreach(point => result = result ::: List((point.label, predict(point.features))))
-    result
+    //var result = List[(Double,Double)]()
+    //testData.collect().foreach(point => result = result ::: List((point.label, predict(point.features))))
+    //result
+    List((testData.first().label, predict(testData.first().features)))
   }
 
 
@@ -205,6 +208,19 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
     this.dataWithIndex.map(r => (r._1.asInstanceOf[Int], getDistance(t, r._2.features))).sortBy(_._2).map(_._1).collect().toList
   }
 
+  def getTopNeighborsForRuleGeneration(caseIndex: Int): List[Int] = {
+    var result : List[(Int, Double)] = List()
+    for (i <- 0 until 100){
+      if (caseIndex != i){
+        result = result ::: List((i, getDistance(this.dataWithIndex.lookup(caseIndex)(0).features, this.dataWithIndex.lookup(i)(0).features)))
+      }
+    }
+    //this.dataWithIndex.collect().foreach(r => {
+    //  result = result ::: List((r._1.asInstanceOf[Int], getDistance(this.dataWithIndex.lookup(caseIndex)(0).features, r._2.features)))
+    //})
+    getTopKWithQSel(result, this.ruleRadius).map(_._1)
+  }
+
   def getTopNeighbors(t:Vector): List[Int] = {
     getTopKWithQSel(this.dataWithIndex.map(r => {
       (r._1.asInstanceOf[Int], getDistance(t, r._2.features))
@@ -231,8 +247,8 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
     baseCaseIndices.map(r => {
       val baseLabel = dataWithIndex.lookup(r)(0).label
       val antecedent = dataWithIndex.lookup(r)(0).features.toArray.zip(testData.toArray).toList
-      val rulesToConsider = ruleBaseWithIndex.filter{case (a, b) => b._1._1 == baseLabel}
-      getTopRules(rulesToConsider, antecedent).map(ruleBaseWithIndex.lookup(_)(0)._1._2).groupBy(identity).maxBy(_._2.size)._1
+      val rulesToConsider = ruleBase4WithIndex.filter{case (a, b) => b._1._1 == baseLabel}
+      getTopRules(rulesToConsider, antecedent).map(ruleBase4WithIndex.lookup(_)(0)._1._2).groupBy(identity).maxBy(_._2.size)._1
     }).groupBy(identity).maxBy(_._2.size)._1
   }
 
@@ -347,6 +363,21 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
     //persistNearestNeighbors()
     //null
     println("Started forming rules")
+    val caseNeighbors: scala.collection.mutable.Map[Int, List[Int]] = scala.collection.mutable.Map[Int, List[Int]]()
+    for (i <- 0 until dataWithIndex.count().asInstanceOf[Int]){
+      println("======================================================================" + i + "====================================================================")
+      caseNeighbors(i) = getTopNeighborsForRuleGeneration(i)
+    }
+    println(caseNeighbors.toString())
+    System.exit(0)
+    ruleBase4 = dataWithIndex.map(r => (r, caseNeighbors(r._1.asInstanceOf[Int]))).map{case (k, v) =>  v.map(p => {
+      val tmpCase = dataWithIndex.lookup(p)(0)
+      ((k._2.label, tmpCase.label), (k._2.features.toArray.toList.zip(tmpCase.features.toArray)))
+    })}.flatMap(q => q)
+    ruleBase4WithIndex = ruleBase4.zipWithIndex().map{case (k, v) => (v, k)}
+
+      //cartesian(dataWithIndex).filter{case (a,b) => a._1 != b._1}
+      //.map{case ((a,b),(c,d)) => ((b.label, d.label), (b.features.toArray.toList zip d.features.toArray.toList))}
     //var ruleBase = dataWithIndex.cartesian(dataWithIndex).filter{case (a,b) => a._1 != b._1}
     //  .map{case ((a,b),(c,d)) => ((b.label, d.label), (b.features.toArray.toList zip d.features.toArray.toList))}
     val ruleClassStat = ruleBase.map(x => x._1).countByValue()

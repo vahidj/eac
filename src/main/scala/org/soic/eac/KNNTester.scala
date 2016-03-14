@@ -57,7 +57,7 @@ object KNNTester {
     //println("+++++++++++++++++++++++++++++++++++" + tmp.toString())
 
     val nfolds: Int = 20
-    val knn = new EAC(10, 10, trainingData, testData)
+    val knn = new EAC(10, 10, 20, trainingData, testData)
     //val neighbors = testData.zipWithIndex().map{case (k, v) => (v, k)}
     //  .map(r => (r._1.asInstanceOf[Int], knn.getSortedNeighbors(r._2.features)))
 
@@ -93,7 +93,7 @@ object KNNTester {
 
     //paramMap.toSeq.filter(_.param.name == "maxBins")(0).value
 
-    //knn.train()
+    knn.train()
 
     /*println(knn.predict(testData.first().features))
     val labelAndPreds = testData.map{
@@ -101,7 +101,9 @@ object KNNTester {
         //println(point.label + " " + prediction)
         (point.label, prediction)
     }*/
-    val labeleAndPredsRF = testData.map{
+    val labelAndPreds = knn.getPredAndLabels()
+    //println(testData.count().asInstanceOf[Int])
+    /*val labeleAndPredsRF = testData.map{
       point => val prediction = model.predict(point.features)
         (point.label, prediction)
     }
@@ -110,7 +112,7 @@ object KNNTester {
     //println(labelAndPreds.filter(r => r._1 != r._2).count())
     val testErr = labelAndPreds.filter(r => r._1 != r._2).length * 1.0/testData.count()
     val testErrRF = labeleAndPredsRF.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
-    println("KNN Test Error = " + testErr + " RF test error = " + testErrRF)
+    println("KNN Test Error = " + testErr + " RF test error = " + testErrRF)*/
     //println("Learned classification forest model:\n" + model.toDebugString)
     /*val data = rawData.map{line =>
         val values = line.split(",")
