@@ -31,8 +31,9 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
   //each element in the list contains the distance between pairs of values of the corrsponding feature
   private var mizan = List.fill(this.data.first().features.size)(scala.collection.mutable.Map[(Double, Double),  Double]())
   private var ruleMizan = List.fill(this.data.first().features.size)(scala.collection.mutable.Map[((Double, Double), (Double,Double)),  Double]())
-  private var ruleBase: RDD[((Double, Double), List[(Double, Double)])] = dataWithIndex.cartesian(dataWithIndex).filter{case (a,b) => a._1 != b._1}
+  private val ruleBase: RDD[((Double, Double), List[(Double, Double)])] = dataWithIndex.cartesian(dataWithIndex).filter{case (a,b) => a._1 != b._1}
     .map{case ((a,b),(c,d)) => ((b.label, d.label), (b.features.toArray.toList zip d.features.toArray.toList))}
+  private val ruleBaseWithIndex = ruleBase.zipWithIndex().map{case (k,v) => (v,k)}
   //private var mizan = List[scala.collection.mutable.Map[(Double, Double), Double]]()//List[util.HashMap[(Double, Double), Int]]()
   //2D array, indices represent indices of elements in data, each element represents distances between the case represented by row and column
   private var distances = scala.collection.mutable.Map[(Int, Int), Double]()
@@ -185,8 +186,11 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
     inputList(n)._2
   }
 
-  def getTopRules(rb: RDD[((Double, Double), List[(Double, Double)])], antecedent: List[(Double, Double)]): List[(Double, Double)] = {
-    rb.map(r => (r._1, getRuleDistance(r._2, antecedent))).sortBy(_._2).map(_._1).take(this.rno).toList
+  def getTopRules(rb: RDD[(Long, ((Double, Double), List[(Double, Double)]))], antecedent: List[(Double, Double)]): List[Int] = {
+    getTopKWithQSel(rb.map(r => {
+      (r._1.asInstanceOf[Int], getRuleDistance(antecedent, r._2._2))
+    }).collect().toList, this.rno).map(_._1)
+    //rb.map(r => (r._1, getRuleDistance(r._2, antecedent))).sortBy(_._2).map(_._1).take(this.rno).toList
   }
 
   def persistNearestNeighbors(): RDD[(Int, List[Int])] = {
@@ -220,16 +224,16 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
 
   def predict(testData: Vector): Double = {
     //kNN
-    getTopNeighbors(testData).map(dataWithIndex.lookup(_)(0).label).groupBy(identity).maxBy(_._2.size)._1
+    //getTopNeighbors(testData).map(dataWithIndex.lookup(_)(0).label).groupBy(identity).maxBy(_._2.size)._1
     //EAC
-    /*val baseCaseIndices = getTopNeighbors(testData)
+    val baseCaseIndices = getTopNeighbors(testData)
     var result = 0.0
     baseCaseIndices.map(r => {
       val baseLabel = dataWithIndex.lookup(r)(0).label
       val antecedent = dataWithIndex.lookup(r)(0).features.toArray.zip(testData.toArray).toList
-      val rulesToConsider = ruleBase.filter{case (a, b) => a._1 == baseLabel}
-      getTopRules(rulesToConsider, antecedent).map(_._2).groupBy(identity).maxBy(_._2.size)._1
-    }).groupBy(identity).maxBy(_._2.size)._1*/
+      val rulesToConsider = ruleBaseWithIndex.filter{case (a, b) => b._1._1 == baseLabel}
+      getTopRules(rulesToConsider, antecedent).map(ruleBaseWithIndex.lookup(_)(0)._1._2).groupBy(identity).maxBy(_._2.size)._1
+    }).groupBy(identity).maxBy(_._2.size)._1
   }
 
   def train(): EACModel = {
@@ -340,9 +344,9 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
         neighbors(i) = getNearestNeighbors(i)
       }
     }*/
-    persistNearestNeighbors()
-    null
-    /*println("Started forming rules")
+    //persistNearestNeighbors()
+    //null
+    println("Started forming rules")
     //var ruleBase = dataWithIndex.cartesian(dataWithIndex).filter{case (a,b) => a._1 != b._1}
     //  .map{case ((a,b),(c,d)) => ((b.label, d.label), (b.features.toArray.toList zip d.features.toArray.toList))}
     val ruleClassStat = ruleBase.map(x => x._1).countByValue()
@@ -402,9 +406,9 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
 
     //println(ruleMizan.toString())
     //System.exit(0)
-    println("Started building rule mizan")
+    //println("Started building rule mizan")
     println("IS ABOUT TO BUILD THE MODEL")
-    new EACModel(k)*/
+    new EACModel(k)
   }
 }
 
