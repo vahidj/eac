@@ -50,6 +50,7 @@ object KNNTester {
 
     val nfolds: Int = 20
     val knn = new EAC(1, 10, trainingData, testData, transformed)
+    //knn.persistNearestNeighbors()
 
     //val paramGrid = new ParamGridBuilder().addGrid(knn.k, Array(1,2,3,4,5,6,7)).build()
     //val paramGrid = new ParamGridBuilder().addGrid(rf.numTrees, Array(1,5,10,30,60,90)).addGrid(rf.maxDepth, Array(1,2,3,4,5,6,7,8,9,10))
