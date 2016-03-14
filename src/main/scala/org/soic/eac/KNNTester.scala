@@ -8,6 +8,7 @@ import org.apache.spark.mllib.linalg._
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.RandomForest
 import org.apache.spark.mllib.util.MLUtils
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.{Row, SQLContext}
@@ -48,10 +49,19 @@ object KNNTester {
     val maxDepth = 5
     val maxBins = 32
 
-    val nfolds: Int = 20
-    val knn = new EAC(1, 10, trainingData, testData, transformed)
-    //knn.persistNearestNeighbors()
+    //trainingData.saveAsTextFile("train")
+    //testData.saveAsTextFile("test")
+    //val tmp: RDD[String] = sc.textFile(EACConfig.BASEPATH + "train.txt")
+    //println(tmp.count().asInstanceOf[Int])
+    //tmp.foreach(r => println(r.toString))
+    //println("+++++++++++++++++++++++++++++++++++" + tmp.toString())
 
+    val nfolds: Int = 20
+    val knn = new EAC(20, 10, trainingData, testData)
+    //val neighbors = testData.zipWithIndex().map{case (k, v) => (v, k)}
+    //  .map(r => (r._1.asInstanceOf[Int], knn.getSortedNeighbors(r._2.features)))
+
+    //neighbors.saveAsTextFile("neighbors")
     //val paramGrid = new ParamGridBuilder().addGrid(knn.k, Array(1,2,3,4,5,6,7)).build()
     //val paramGrid = new ParamGridBuilder().addGrid(rf.numTrees, Array(1,5,10,30,60,90)).addGrid(rf.maxDepth, Array(1,2,3,4,5,6,7,8,9,10))
     //  .addGrid(rf.maxBins, Array(30, 60, 90)).build()
@@ -83,7 +93,7 @@ object KNNTester {
 
     //paramMap.toSeq.filter(_.param.name == "maxBins")(0).value
 
-    knn.train()
+    //knn.train()
 
     /*println(knn.predict(testData.first().features))
     val labelAndPreds = testData.map{

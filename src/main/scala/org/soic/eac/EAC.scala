@@ -18,7 +18,7 @@ import scala.collection._
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
-class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoint], fullData: RDD[LabeledPoint])
+class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoint])
   extends Serializable with Logging {
   def setK(k: Int): EAC = {
     this.k = k
@@ -189,9 +189,12 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
     rb.map(r => (r._1, getRuleDistance(r._2, antecedent))).sortBy(_._2).map(_._1).take(this.rno).toList
   }
 
-  def persistNearestNeighbors(): Unit = {
-    this.fullData.zipWithIndex().map{case (k, v) => (v, k)}.map(r => (r._1.asInstanceOf[Int], getSortedNeighbors(r._2.features)))
-      .saveAsTextFile("neighbors.txt")
+  def persistNearestNeighbors(): RDD[(Int, List[Int])] = {
+    testData.zipWithIndex().map{case (k, v) => (v, k)}
+      .map(r => (r._1.asInstanceOf[Int], getSortedNeighbors(r._2.features)))
+      //.saveAsTextFile("neighbors")
+    //this.fullData.zipWithIndex().map{case (k, v) => (v, k)}.map(r => (r._1.asInstanceOf[Int], getSortedNeighbors(r._2.features)))
+    //  .saveAsTextFile("neighbors.txt")
   }
 
   def getSortedNeighbors(t: Vector): List[Int] = {
@@ -199,9 +202,9 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
   }
 
   def getTopNeighbors(t:Vector): List[Int] = {
-    /*getTopKWithQSel(this.dataWithIndex.map(r => {
+    getTopKWithQSel(this.dataWithIndex.map(r => {
       (r._1.asInstanceOf[Int], getDistance(t, r._2.features))
-    }).collect().toList, this.k).map(_._1)*/
+    }).collect().toList, this.k).map(_._1)
     //sortBy(_._2).map(_._1).take(this.k).toList
     /*var result = List[(Int, Double)]()
     this.dataWithIndex.foreach(r => {
@@ -210,7 +213,7 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
       result = result ::: List((r._1.asInstanceOf[Int], tempDist))
     })
     result.sortBy(_._2).map(_._1).take(this.k)*/
-    this.dataWithIndex.map(r => (r._1.asInstanceOf[Int], getDistance(t, r._2.features))).sortBy(_._2).map(_._1).take(this.k).toList
+    //this.dataWithIndex.map(r => (r._1.asInstanceOf[Int], getDistance(t, r._2.features))).sortBy(_._2).map(_._1).take(this.k).toList
     //val tmp = this.dataWithIndex.map(r => (r._1.asInstanceOf[Int], getDistance(t, r._2.features))).sortBy(_._2).collect().toList
     //tmp.filter(_._2 <= tmp(this.k)._2).map(_._1)
   }
@@ -337,7 +340,9 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
         neighbors(i) = getNearestNeighbors(i)
       }
     }*/
-    println("Started forming rules")
+    persistNearestNeighbors()
+    null
+    /*println("Started forming rules")
     //var ruleBase = dataWithIndex.cartesian(dataWithIndex).filter{case (a,b) => a._1 != b._1}
     //  .map{case ((a,b),(c,d)) => ((b.label, d.label), (b.features.toArray.toList zip d.features.toArray.toList))}
     val ruleClassStat = ruleBase.map(x => x._1).countByValue()
@@ -399,7 +404,7 @@ class EAC(private var k: Int, private val rno: Int, data: RDD[LabeledPoint], tes
     //System.exit(0)
     println("Started building rule mizan")
     println("IS ABOUT TO BUILD THE MODEL")
-    new EACModel(k)
+    new EACModel(k)*/
   }
 }
 
