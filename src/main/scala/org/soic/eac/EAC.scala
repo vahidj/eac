@@ -273,12 +273,17 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
     var result = 0.0
     //println(this.ruleBase4WithIndex.toString())
     //System.exit(0)
+
     baseCaseIndices.map(r => {
       val baseLabel = dataWithIndexList(r)._2.label
       val antecedent = dataWithIndexList(r)._2.features.toArray.zip(testData.toArray).toList
       val rulesToConsider = ruleBase4WithIndex.filter{case (a, b) => b._1._1 == baseLabel}
-      getTopRules(rulesToConsider, antecedent).map(ruleBase4WithIndex(_)._2._1._2).groupBy(identity).maxBy(_._2.size)._1
+      val ttt = getTopRules(rulesToConsider, antecedent).map(ruleBase4WithIndex(_)._2._1._2).groupBy(identity).maxBy(_._2.size)._1
+      println(ttt.toString)
+      System.exit(0)
+      ttt
     }).groupBy(identity).maxBy(_._2.size)._1
+
     /*baseCaseIndices.map(r => {
       val baseLabel = dataWithIndex.lookup(r)(0).label
       val antecedent = dataWithIndex.lookup(r)(0).features.toArray.zip(testData.toArray).toList
