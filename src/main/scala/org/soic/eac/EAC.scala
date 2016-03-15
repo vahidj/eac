@@ -370,13 +370,14 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
     }
     //println(caseNeighbors.toString())
     //System.exit(0)
+    val tmpCb = dataWithIndex.collect().toList
     ruleBase4 = dataWithIndex.map(r => (r, caseNeighbors(r._1.asInstanceOf[Int]))).map{case (k, v) =>  v.map(p => {
-      val tmpCase = dataWithIndex.lookup(p)(0)
+      val tmpCase = tmpCb(p)._2
       ((k._2.label, tmpCase.label), (k._2.features.toArray.toList.zip(tmpCase.features.toArray)))
     })}.flatMap(q => q)
 
     val tmpRuleBase = dataWithIndex.map(r => (r, caseNeighbors(r._1.asInstanceOf[Int]))).map{case (k, v) =>  v.map(p => {
-      val tmpCase = dataWithIndex.lookup(p)(0)
+      val tmpCase = tmpCb(p)._2
       ((tmpCase.label, k._2.label), (tmpCase.features.toArray.toList.zip(k._2.features.toArray)))
     })}.flatMap(q => q)
 
