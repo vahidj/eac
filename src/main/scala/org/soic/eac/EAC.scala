@@ -271,8 +271,8 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
     //EAC
     val baseCaseIndices = getTopNeighbors(testData)
     var result = 0.0
-    println(this.ruleBase4WithIndex.toString())
-    System.exit(0)
+    //println(this.ruleBase4WithIndex.toString())
+    //System.exit(0)
     baseCaseIndices.map(r => {
       val baseLabel = dataWithIndexList(r)._2.label
       val antecedent = dataWithIndexList(r)._2.features.toArray.zip(testData.toArray).toList
