@@ -107,10 +107,10 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
   }
 
   def getPredAndLabels(): List[(Double,Double)] = {
-    //var result = List[(Double,Double)]()
-    //testData.collect().foreach(point => result = result ::: List((point.label, predict(point.features))))
-    //result
-    List((testData.first().label, predict(testData.first().features)))
+    var result = List[(Double,Double)]()
+    testData.collect().foreach(point => result = result ::: List((point.label, predict(point.features))))
+    result
+    //List((testData.first().label, predict(testData.first().features)))
   }
 
 
@@ -374,6 +374,14 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
       val tmpCase = dataWithIndex.lookup(p)(0)
       ((k._2.label, tmpCase.label), (k._2.features.toArray.toList.zip(tmpCase.features.toArray)))
     })}.flatMap(q => q)
+
+    val tmpRuleBase = dataWithIndex.map(r => (r, caseNeighbors(r._1.asInstanceOf[Int]))).map{case (k, v) =>  v.map(p => {
+      val tmpCase = dataWithIndex.lookup(p)(0)
+      ((tmpCase.label, k._2.label), (tmpCase.features.toArray.toList.zip(k._2.features.toArray)))
+    })}.flatMap(q => q)
+
+    ruleBase4.union(tmpRuleBase)
+
     ruleBase4WithIndex = ruleBase4.zipWithIndex().map{case (k, v) => (v, k)}
 
       //cartesian(dataWithIndex).filter{case (a,b) => a._1 != b._1}
