@@ -106,6 +106,13 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
     math.sqrt(distance)
   }
 
+  def getPredAndLabelsKNN(): List[(Double,Double)] = {
+    var result = List[(Double,Double)]()
+    testData.collect().foreach(point => result = result ::: List((point.label, predictKNN(point.features))))
+    result
+    //List((testData.first().label, predict(testData.first().features)))
+  }
+
   def getPredAndLabels(): List[(Double,Double)] = {
     var result = List[(Double,Double)]()
     testData.collect().foreach(point => result = result ::: List((point.label, predict(point.features))))
@@ -236,6 +243,20 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
     //this.dataWithIndex.map(r => (r._1.asInstanceOf[Int], getDistance(t, r._2.features))).sortBy(_._2).map(_._1).take(this.k).toList
     //val tmp = this.dataWithIndex.map(r => (r._1.asInstanceOf[Int], getDistance(t, r._2.features))).sortBy(_._2).collect().toList
     //tmp.filter(_._2 <= tmp(this.k)._2).map(_._1)
+  }
+
+  def predictKNN(testData: Vector): Double = {
+    //kNN
+    getTopNeighbors(testData).map(dataWithIndex.lookup(_)(0).label).groupBy(identity).maxBy(_._2.size)._1
+    //EAC
+    /*val baseCaseIndices = getTopNeighbors(testData)
+    var result = 0.0
+    baseCaseIndices.map(r => {
+      val baseLabel = dataWithIndex.lookup(r)(0).label
+      val antecedent = dataWithIndex.lookup(r)(0).features.toArray.zip(testData.toArray).toList
+      val rulesToConsider = ruleBase4WithIndex.filter{case (a, b) => b._1._1 == baseLabel}
+      getTopRules(rulesToConsider, antecedent).map(ruleBase4WithIndex.lookup(_)(0)._1._2).groupBy(identity).maxBy(_._2.size)._1
+    }).groupBy(identity).maxBy(_._2.size)._1*/
   }
 
   def predict(testData: Vector): Double = {

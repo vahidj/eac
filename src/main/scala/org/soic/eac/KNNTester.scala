@@ -57,7 +57,7 @@ object KNNTester {
     //println("+++++++++++++++++++++++++++++++++++" + tmp.toString())
 
     val nfolds: Int = 20
-    val knn = new EAC(10, 10, 20, trainingData, testData)
+    val knn = new EAC(1, 10, 10, trainingData, testData)
     //val neighbors = testData.zipWithIndex().map{case (k, v) => (v, k)}
     //  .map(r => (r._1.asInstanceOf[Int], knn.getSortedNeighbors(r._2.features)))
 
@@ -108,11 +108,13 @@ object KNNTester {
         (point.label, prediction)
     }
     val labelAndPreds = knn.getPredAndLabels()
+    val labelAndPredKnn = knn.getPredAndLabelsKNN()
     //println(labelAndPreds)
     //println(labelAndPreds.filter(r => r._1 != r._2).count())
+    val testErrKNN = labelAndPredKnn.filter(r => r._1 != r._2).length * 1.0/testData.count()
     val testErr = labelAndPreds.filter(r => r._1 != r._2).length * 1.0/testData.count()
     val testErrRF = labeleAndPredsRF.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
-    println("KNN Test Error = " + testErr + " RF test error = " + testErrRF)
+    println("EAC Test Error = " + testErr + " RF test error = " + testErrRF + " KNN test error = " + testErrKNN)
     //println("Learned classification forest model:\n" + model.toDebugString)
     /*val data = rawData.map{line =>
         val values = line.split(",")
