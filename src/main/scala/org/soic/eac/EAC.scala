@@ -28,14 +28,16 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
   def getK: Int = k
   //private var data: RDD[LabeledPoint] = null
   private var dataWithIndex: RDD[(Long, LabeledPoint)] = data.zipWithIndex().map{case (k, v) => (v, k)}
+  private val dataWithIndexList: List[(Long, LabeledPoint)] = dataWithIndex.collect().toList
   //each element in the list contains the distance between pairs of values of the corrsponding feature
   private var mizan = List.fill(this.data.first().features.size)(scala.collection.mutable.Map[(Double, Double),  Double]())
   private var ruleMizan = List.fill(this.data.first().features.size)(scala.collection.mutable.Map[((Double, Double), (Double,Double)),  Double]())
   private val ruleBase: RDD[((Double, Double), List[(Double, Double)])] = dataWithIndex.cartesian(dataWithIndex).filter{case (a,b) => a._1 != b._1}
     .map{case ((a,b),(c,d)) => ((b.label, d.label), (b.features.toArray.toList zip d.features.toArray.toList))}
   private val ruleBaseWithIndex = ruleBase.zipWithIndex().map{case (k,v) => (v,k)}
-  private var ruleBase4: RDD[((Double, Double), List[(Double, Double)])] = null
-  private var ruleBase4WithIndex: RDD[(Long, ((Double, Double), List[(Double, Double)]))] = null
+  private var ruleBase4: List[((Double, Double), List[(Double, Double)])] = null
+  private var ruleBase4WithIndex: List[(Int, ((Double, Double), List[(Double, Double)]))] = null
+  //private var ruleBase4WithIndex: RDD[(Long, ((Double, Double), List[(Double, Double)]))] = null
   //private var mizan = List[scala.collection.mutable.Map[(Double, Double), Double]]()//List[util.HashMap[(Double, Double), Int]]()
   //2D array, indices represent indices of elements in data, each element represents distances between the case represented by row and column
   private var distances = scala.collection.mutable.Map[(Int, Int), Double]()
@@ -93,6 +95,8 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
   }
 
   def getDistance(c1:Vector, c2:Vector): Double = {
+    //println(mizan.toString())
+    //println(c1.toString + "-------------" + c2.toString)
     var distance: Double = 0
     var featureCounter = 0
     c1.toArray.foreach(f1 => {
@@ -122,6 +126,7 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
 
 
   def getTopKWithQSel(inputList: List[(Int, Double)], inputK: Int): List[(Int, Double)] = {
+    //print(inputList.toString)
     val pivot = quickSelect(inputList.to[ListBuffer], inputK)
     var result = List[(Int, Double)]()
     inputList.foreach(r => {
@@ -130,6 +135,7 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
       else if (r._2 == pivot)
         result = result ::: List(r)
     })
+    //println(result.toString())
     result.take(inputK)
   }
 
@@ -196,7 +202,7 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
     inputList(n)._2
   }
 
-  def getTopRules(rb: RDD[(Long, ((Double, Double), List[(Double, Double)]))], antecedent: List[(Double, Double)]): List[Int] = {
+  def getTopRules(rb: List[(Int, ((Double, Double), List[(Double, Double)]))], antecedent: List[(Double, Double)]): List[Int] = {
     /*getTopKWithQSel(rb.map(r => {
       (r._1.asInstanceOf[Int], getRuleDistance(antecedent, r._2._2))
     }).collect().toList, this.rno).map(_._1)*/
@@ -217,9 +223,9 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
 
   def getTopNeighborsForRuleGeneration(caseIndex: Int): List[Int] = {
     var result : List[(Int, Double)] = List()
-    for (i <- 0 until 100){
+    for (i <- 0 until dataWithIndexList.size){
       if (caseIndex != i){
-        result = result ::: List((i, getDistance(this.dataWithIndex.lookup(caseIndex)(0).features, this.dataWithIndex.lookup(i)(0).features)))
+        result = result ::: List((i, getDistance(this.dataWithIndexList(caseIndex)._2.features, this.dataWithIndexList(i)._2.features)))
       }
     }
     //this.dataWithIndex.collect().foreach(r => {
@@ -265,12 +271,20 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
     //EAC
     val baseCaseIndices = getTopNeighbors(testData)
     var result = 0.0
+    println(this.ruleBase4WithIndex.toString())
+    System.exit(0)
     baseCaseIndices.map(r => {
+      val baseLabel = dataWithIndexList(r)._2.label
+      val antecedent = dataWithIndexList(r)._2.features.toArray.zip(testData.toArray).toList
+      val rulesToConsider = ruleBase4WithIndex.filter{case (a, b) => b._1._1 == baseLabel}
+      getTopRules(rulesToConsider, antecedent).map(ruleBase4WithIndex(_)._2._1._2).groupBy(identity).maxBy(_._2.size)._1
+    }).groupBy(identity).maxBy(_._2.size)._1
+    /*baseCaseIndices.map(r => {
       val baseLabel = dataWithIndex.lookup(r)(0).label
       val antecedent = dataWithIndex.lookup(r)(0).features.toArray.zip(testData.toArray).toList
       val rulesToConsider = ruleBase4WithIndex.filter{case (a, b) => b._1._1 == baseLabel}
       getTopRules(rulesToConsider, antecedent).map(ruleBase4WithIndex.lookup(_)(0)._1._2).groupBy(identity).maxBy(_._2.size)._1
-    }).groupBy(identity).maxBy(_._2.size)._1
+    }).groupBy(identity).maxBy(_._2.size)._1*/
   }
 
   def train(): EACModel = {
@@ -283,6 +297,8 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
       val tmp2 = data.map(x => (x.features(i), x.label)).countByValue()
       featureClassStat = featureClassStat ::: List(tmp2)
     }
+
+    //println(featureStat.toString())
     //println(featureClassStat.toString())
     /*this.dataWithIndex = data.zipWithIndex().map{case (k,v) => (v, k)}
     //key: class value, value: how many records have this class value
@@ -386,41 +402,44 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
     println("Started forming rules")
     val caseNeighbors: scala.collection.mutable.Map[Int, List[Int]] = scala.collection.mutable.Map[Int, List[Int]]()
     for (i <- 0 until dataWithIndex.count().asInstanceOf[Int]){
-      println("======================================================================" + i + "====================================================================")
+      //println("======================================================================" + i + "====================================================================")
       caseNeighbors(i) = getTopNeighborsForRuleGeneration(i)
     }
     //println(caseNeighbors.toString())
     //System.exit(0)
-    val tmpCb = dataWithIndex.collect().toList
-    ruleBase4 = dataWithIndex.map(r => (r, caseNeighbors(r._1.asInstanceOf[Int]))).map{case (k, v) =>  v.map(p => {
-      val tmpCase = tmpCb(p)._2
-      ((k._2.label, tmpCase.label), (k._2.features.toArray.toList.zip(tmpCase.features.toArray)))
+    //val tmpCb = dataWithIndex.collect().toList
+    ruleBase4 = dataWithIndexList.map(r => (r, caseNeighbors(r._1.asInstanceOf[Int]))).map{case (k,v) => v.map(p => {
+      ((k._2.label, dataWithIndexList(p)._2.label), (k._2.features.toArray.toList.zip(dataWithIndexList(p)._2.features.toArray)))
     })}.flatMap(q => q)
 
-    val tmpRuleBase = dataWithIndex.map(r => (r, caseNeighbors(r._1.asInstanceOf[Int]))).map{case (k, v) =>  v.map(p => {
-      val tmpCase = tmpCb(p)._2
+    /*ruleBase4 = dataWithIndex.map(r => (r, caseNeighbors(r._1.asInstanceOf[Int]))).map{case (k, v) =>  v.map(p => {
+      val tmpCase = dataWithIndexList(p)._2
+      ((k._2.label, tmpCase.label), (k._2.features.toArray.toList.zip(tmpCase.features.toArray)))
+    })}.flatMap(q => q)*/
+
+    val tmpRuleBase = dataWithIndexList.map(r => (r, caseNeighbors(r._1.asInstanceOf[Int]))).map{case (k, v) =>  v.map(p => {
+      val tmpCase = dataWithIndexList(p)._2
       ((tmpCase.label, k._2.label), (tmpCase.features.toArray.toList.zip(k._2.features.toArray)))
     })}.flatMap(q => q)
 
     ruleBase4.union(tmpRuleBase)
-
-    ruleBase4WithIndex = ruleBase4.zipWithIndex().map{case (k, v) => (v, k)}
+    ruleBase4WithIndex = ruleBase4.zipWithIndex.map{case (k,v) => (v,k)}
+    //ruleBase4WithIndex = ruleBase4.zipWithIndex(). .map{case (k, v) => (v, k)}
 
       //cartesian(dataWithIndex).filter{case (a,b) => a._1 != b._1}
       //.map{case ((a,b),(c,d)) => ((b.label, d.label), (b.features.toArray.toList zip d.features.toArray.toList))}
     //var ruleBase = dataWithIndex.cartesian(dataWithIndex).filter{case (a,b) => a._1 != b._1}
     //  .map{case ((a,b),(c,d)) => ((b.label, d.label), (b.features.toArray.toList zip d.features.toArray.toList))}
-    val ruleClassStat = ruleBase4.map(x => x._1).countByValue()
+    val ruleClassStat = ruleBase4.map(x => x._1).groupBy(identity).mapValues(_.size)
 
-    var ruleFeatureStat = List[Map[(Double, Double), Long]]()
-    var ruleFeatureClassStat = List[Map[((Double, Double), (Double, Double)), Long]]()
+    var ruleFeatureStat = List[Map[(Double, Double), Int]]()
+    var ruleFeatureClassStat = List[Map[((Double, Double), (Double, Double)), Int]]()
     for (i <- 0 until data.first().features.size){
-      val tmp = ruleBase4.map(x => x._2(i)).countByValue()
+      val tmp = ruleBase4.map(x => x._2(i)).groupBy(identity).mapValues(_.size)
       ruleFeatureStat =  ruleFeatureStat ::: List(tmp)
-      val tmp2 = ruleBase4.map(x => (x._2(i), x._1)).countByValue()
+      val tmp2 = ruleBase4.map(x => (x._2(i), x._1)).groupBy(identity).mapValues(_.size)
       ruleFeatureClassStat = ruleFeatureClassStat ::: List(tmp2)
     }
-
 
 
     val ruleFeatureIt = ruleFeatureStat.iterator
@@ -439,8 +458,8 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
           val ruleClassValsIt = ruleClassStat.keySet.iterator
           while(ruleClassValsIt.hasNext){
             val ruleClassVal = ruleClassValsIt.next()
-            val tmp1 = ruleFeatureClassStat(ruleFeatureCounter).getOrElse(((v1, ruleClassVal)), 0L).toInt.toDouble
-            val tmp2 = ruleFeatureClassStat(ruleFeatureCounter).getOrElse(((v2, ruleClassVal)), 0L).toInt.toDouble
+            val tmp1 = ruleFeatureClassStat(ruleFeatureCounter).getOrElse(((v1, ruleClassVal)), 0).toDouble
+            val tmp2 = ruleFeatureClassStat(ruleFeatureCounter).getOrElse(((v2, ruleClassVal)), 0).toDouble
             vdm += Math.abs( tmp1 / v1cnt -  tmp2 / v2cnt)
             //println(tmp1 + " " + tmp2 + " " + " " + tmp1 + " " +tmp2 +" "+ vdm)
           }

@@ -39,7 +39,7 @@ object KNNTester {
     val transformed = readr.DFTransformed(indexed)
     val output = readr.Output(indexed)
     
-    val splits = transformed.randomSplit(Array(0.99, 0.01))
+    val splits = transformed.randomSplit(Array(0.9, 0.1))
     val (trainingData, testData) = (splits(0), splits(1))
     val numClasses = 4
     val categoricalFeaturesInfo = Map[Int, Int]((0,4),(1,4),(2,4),(3,3),(4,3),(5,3))
@@ -115,6 +115,9 @@ object KNNTester {
     val testErr = labelAndPreds.filter(r => r._1 != r._2).length * 1.0/testData.count()
     val testErrRF = labeleAndPredsRF.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
     println("EAC Test Error = " + testErr + " RF test error = " + testErrRF + " KNN test error = " + testErrKNN)
+
+    //val testErrRF = labeleAndPredsRF.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
+    //println(testErrRF)
     //println("Learned classification forest model:\n" + model.toDebugString)
     /*val data = rawData.map{line =>
         val values = line.split(",")
