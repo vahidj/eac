@@ -368,8 +368,8 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
       println("======================================================================" + i + "====================================================================")
       caseNeighbors(i) = getTopNeighborsForRuleGeneration(i)
     }
-    println(caseNeighbors.toString())
-    System.exit(0)
+    //println(caseNeighbors.toString())
+    //System.exit(0)
     ruleBase4 = dataWithIndex.map(r => (r, caseNeighbors(r._1.asInstanceOf[Int]))).map{case (k, v) =>  v.map(p => {
       val tmpCase = dataWithIndex.lookup(p)(0)
       ((k._2.label, tmpCase.label), (k._2.features.toArray.toList.zip(tmpCase.features.toArray)))
@@ -380,14 +380,14 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
       //.map{case ((a,b),(c,d)) => ((b.label, d.label), (b.features.toArray.toList zip d.features.toArray.toList))}
     //var ruleBase = dataWithIndex.cartesian(dataWithIndex).filter{case (a,b) => a._1 != b._1}
     //  .map{case ((a,b),(c,d)) => ((b.label, d.label), (b.features.toArray.toList zip d.features.toArray.toList))}
-    val ruleClassStat = ruleBase.map(x => x._1).countByValue()
+    val ruleClassStat = ruleBase4.map(x => x._1).countByValue()
 
     var ruleFeatureStat = List[Map[(Double, Double), Long]]()
     var ruleFeatureClassStat = List[Map[((Double, Double), (Double, Double)), Long]]()
     for (i <- 0 until data.first().features.size){
-      val tmp = ruleBase.map(x => x._2(i)).countByValue()
+      val tmp = ruleBase4.map(x => x._2(i)).countByValue()
       ruleFeatureStat =  ruleFeatureStat ::: List(tmp)
-      val tmp2 = ruleBase.map(x => (x._2(i), x._1)).countByValue()
+      val tmp2 = ruleBase4.map(x => (x._2(i), x._1)).countByValue()
       ruleFeatureClassStat = ruleFeatureClassStat ::: List(tmp2)
     }
 
