@@ -57,7 +57,7 @@ object KNNTester {
     //println("+++++++++++++++++++++++++++++++++++" + tmp.toString())
 
     val nfolds: Int = 20
-    val knn = new EAC(1, 10, 10, trainingData, testData)
+    val knn = new EAC(10, 10, 10, trainingData, testData)
     //val neighbors = testData.zipWithIndex().map{case (k, v) => (v, k)}
     //  .map(r => (r._1.asInstanceOf[Int], knn.getSortedNeighbors(r._2.features)))
 

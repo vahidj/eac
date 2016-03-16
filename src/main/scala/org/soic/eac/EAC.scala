@@ -73,14 +73,17 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
         distance = distance + scala.math.pow(ruleMizan(featureCounter)((f1, f2)), 2)
       else if (ruleMizan(featureCounter).contains(f2, f1))
         distance = distance + scala.math.pow(ruleMizan(featureCounter)((f2, f1)), 2)
-      else
-        distance = distance + 1
+      else if (f1 != f2){
+		//println()
+		//println(f1 + "   " + f2)
+        distance = distance + 1.0/(r1.length)
+	  }
       featureCounter += 1
     })
     math.sqrt(distance)
   }
 
-  def getDistance(i:Long, j:Long): Double = {
+  /*def getDistance(i:Long, j:Long): Double = {
     var distance: Double = 0
     val c1: LabeledPoint = this.dataWithIndex.lookup(i)(0)
     val c2: LabeledPoint = this.dataWithIndex.lookup(j)(0)
@@ -94,12 +97,13 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
       featureCounter += 1
     })
     math.sqrt(distance)
-  }
+  }*/
 
   def getDistance(c1:Vector, c2:Vector): Double = {
     //println(mizan.toString())
     //println(c1.toString + "-------------" + c2.toString)
     var distance: Double = 0
+	//var test: Int = 0
     var featureCounter = 0
     c1.toArray.foreach(f1 => {
       val f2 = c2.toArray(featureCounter)
@@ -107,10 +111,16 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
       val greater = Math.max(f1,f2)
       if (mizan(featureCounter).contains(smaller, greater))
         distance = distance + scala.math.pow(mizan(featureCounter)((smaller, greater)), 2)
-      else
-        distance = distance + 1
+      else if (smaller != greater){
+		//println(mizan.toString())
+		//println(f1 + "    " + f2)
+		//System.exit(0)
+        distance = distance + 1.0/(c1.toArray.length)
+	  }
       featureCounter += 1
     })
+	//println(test)
+	//System.exit(0)
     math.sqrt(distance)
   }
 
