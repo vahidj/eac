@@ -1,5 +1,5 @@
-package org.soic.eac
 
+package org.soic.eac
 import java.util
 
 import org.apache.spark.annotation.Since
@@ -70,9 +70,11 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
     r1.foreach(f1 => {
       val f2 = r2(featureCounter)
       if (ruleMizan(featureCounter).contains(f1, f2))
-        distance = scala.math.pow(ruleMizan(featureCounter)((f1, f2)), 2)
+        distance = distance + scala.math.pow(ruleMizan(featureCounter)((f1, f2)), 2)
       else if (ruleMizan(featureCounter).contains(f2, f1))
-        distance = scala.math.pow(ruleMizan(featureCounter)((f2, f1)), 2)
+        distance = distance + scala.math.pow(ruleMizan(featureCounter)((f2, f1)), 2)
+      else
+        distance = distance + 1
       featureCounter += 1
     })
     math.sqrt(distance)
@@ -104,7 +106,9 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
       val smaller = Math.min(f1, f2)
       val greater = Math.max(f1,f2)
       if (mizan(featureCounter).contains(smaller, greater))
-        distance = scala.math.pow(mizan(featureCounter)((smaller, greater)), 2)
+        distance = distance + scala.math.pow(mizan(featureCounter)((smaller, greater)), 2)
+      else
+        distance = distance + 1
       featureCounter += 1
     })
     math.sqrt(distance)
@@ -279,8 +283,8 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
       val antecedent = dataWithIndexList(r)._2.features.toArray.zip(testData.toArray).toList
       val rulesToConsider = ruleBase4WithIndex.filter{case (a, b) => b._1._1 == baseLabel}
       val ttt = getTopRules(rulesToConsider, antecedent).map(ruleBase4WithIndex(_)._2._1._2).groupBy(identity).maxBy(_._2.size)._1
-      println(ttt.toString)
-      System.exit(0)
+      //println(ttt.toString)
+      //System.exit(0)
       ttt
     }).groupBy(identity).maxBy(_._2.size)._1
 
