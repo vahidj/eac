@@ -124,10 +124,10 @@ object KNNTester {
         (point.label, prediction)
     }
 
-    val labeleAndPredsSVM = testData.map{
+    /*val labeleAndPredsSVM = testData.map{
       point => val prediction = svmModel.predict(point.features)
         (point.label, prediction)
-    }
+    }*/
 
     val labelAndPreds = knn.getPredAndLabels()
     val labelAndPredKnn = knn.getPredAndLabelsKNN()
@@ -138,10 +138,10 @@ object KNNTester {
     val testErrRF = labeleAndPredsRF.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
     val testErrLR = labeleAndPredsLR.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
     val testErrNB = labeleAndPredsNB.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
-    val testErrSVM = labeleAndPredsSVM.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
+    //val testErrSVM = labeleAndPredsSVM.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
     println("EAC Test Error = " + testErr + " RF test error = " + testErrRF + " KNN test error = " + testErrKNN +
       "  Logistic Regression test error " + testErrLR
-      + " Naive Bayes test error " + testErrNB + " SVM test error " + testErrSVM)
+      + " Naive Bayes test error " + testErrNB /*+ " SVM test error " + testErrSVM*/)
 
     //val testErrRF = labeleAndPredsRF.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
     //println(testErrRF)
