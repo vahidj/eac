@@ -4,7 +4,7 @@ import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.RandomForestClassifier
 import org.apache.spark.ml.feature.{VectorAssembler, StringIndexer}
 import org.apache.spark.ml.tuning.{TrainValidationSplit, ParamGridBuilder, CrossValidator}
-import org.apache.spark.mllib.classification.LogisticRegressionWithLBFGS
+import org.apache.spark.mllib.classification.{SVMWithSGD, NaiveBayes, LogisticRegressionWithLBFGS}
 import org.apache.spark.mllib.linalg._
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.RandomForest
@@ -40,7 +40,7 @@ object KNNTester {
     val transformed = readr.DFTransformed(indexed)
     val output = readr.Output(indexed)
     
-    val splits = transformed.randomSplit(Array(0.9, 0.1))
+    val splits = transformed.randomSplit(Array(0.7, 0.3))
     val (trainingData, testData) = (splits(0), splits(1))
     val numClasses = 4
     val categoricalFeaturesInfo = Map[Int, Int]((0,4),(1,4),(2,4),(3,3),(4,3),(5,3))
@@ -79,6 +79,10 @@ object KNNTester {
       numClasses, categoricalFeaturesInfo, numTrees, featureSubsetStrategy, impurity, maxDepth, maxBins, 10)
 
     val lrModel = new LogisticRegressionWithLBFGS().setNumClasses(4).run(trainingData)
+    val nbModel = NaiveBayes.train(trainingData, lambda = 1.0, modelType = "multinomial")
+    val numIterations = 100
+    val svmModel = SVMWithSGD.train(trainingData, numIterations)
+    svmModel.clearThreshold()
     //println("++++++++++++++++++++++++++++++++++++++++\n"+cv.fit(output).bestModel.params.toString())
     //cv.fit(output).bestModel.params.foreach(x => println(x))
     
@@ -115,6 +119,16 @@ object KNNTester {
         (point.label, prediction)
     }
 
+    val labeleAndPredsNB = testData.map{
+      point => val prediction = nbModel.predict(point.features)
+        (point.label, prediction)
+    }
+
+    val labeleAndPredsSVM = testData.map{
+      point => val prediction = svmModel.predict(point.features)
+        (point.label, prediction)
+    }
+
     val labelAndPreds = knn.getPredAndLabels()
     val labelAndPredKnn = knn.getPredAndLabelsKNN()
     //println(labelAndPreds)
@@ -123,7 +137,11 @@ object KNNTester {
     val testErr = labelAndPreds.filter(r => r._1 != r._2).length * 1.0/testData.count()
     val testErrRF = labeleAndPredsRF.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
     val testErrLR = labeleAndPredsLR.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
-    println("EAC Test Error = " + testErr + " RF test error = " + testErrRF + " KNN test error = " + testErrKNN + "  Logistic Regression test error " + testErrLR)
+    val testErrNB = labeleAndPredsNB.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
+    val testErrSVM = labeleAndPredsSVM.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
+    println("EAC Test Error = " + testErr + " RF test error = " + testErrRF + " KNN test error = " + testErrKNN +
+      "  Logistic Regression test error " + testErrLR
+      + " Naive Bayes test error " + testErrNB + " SVM test error " + testErrSVM)
 
     //val testErrRF = labeleAndPredsRF.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
     //println(testErrRF)
