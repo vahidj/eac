@@ -81,8 +81,8 @@ object KNNTester {
     val lrModel = new LogisticRegressionWithLBFGS().setNumClasses(4).run(trainingData)
     val nbModel = NaiveBayes.train(trainingData, lambda = 1.0, modelType = "multinomial")
     val numIterations = 100
-    val svmModel = SVMWithSGD.train(trainingData, numIterations)
-    svmModel.clearThreshold()
+    //val svmModel = SVMWithSGD.train(trainingData, numIterations)
+    //svmModel.clearThreshold()
     //println("++++++++++++++++++++++++++++++++++++++++\n"+cv.fit(output).bestModel.params.toString())
     //cv.fit(output).bestModel.params.foreach(x => println(x))
     
