@@ -4,6 +4,7 @@ import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.RandomForestClassifier
 import org.apache.spark.ml.feature.{VectorAssembler, StringIndexer}
 import org.apache.spark.ml.tuning.{TrainValidationSplit, ParamGridBuilder, CrossValidator}
+import org.apache.spark.mllib.classification.LogisticRegressionWithLBFGS
 import org.apache.spark.mllib.linalg._
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.RandomForest
@@ -77,6 +78,7 @@ object KNNTester {
     val model = RandomForest.trainClassifier(trainingData.toJavaRDD(),
       numClasses, categoricalFeaturesInfo, numTrees, featureSubsetStrategy, impurity, maxDepth, maxBins, 10)
 
+    val lrModel = new LogisticRegressionWithLBFGS().setNumClasses(4).run(trainingData)
     //println("++++++++++++++++++++++++++++++++++++++++\n"+cv.fit(output).bestModel.params.toString())
     //cv.fit(output).bestModel.params.foreach(x => println(x))
     
@@ -107,6 +109,12 @@ object KNNTester {
       point => val prediction = model.predict(point.features)
         (point.label, prediction)
     }
+
+    val labeleAndPredsLR = testData.map{
+      point => val prediction = lrModel.predict(point.features)
+        (point.label, prediction)
+    }
+
     val labelAndPreds = knn.getPredAndLabels()
     val labelAndPredKnn = knn.getPredAndLabelsKNN()
     //println(labelAndPreds)
@@ -114,7 +122,8 @@ object KNNTester {
     val testErrKNN = labelAndPredKnn.filter(r => r._1 != r._2).length * 1.0/testData.count()
     val testErr = labelAndPreds.filter(r => r._1 != r._2).length * 1.0/testData.count()
     val testErrRF = labeleAndPredsRF.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
-    println("EAC Test Error = " + testErr + " RF test error = " + testErrRF + " KNN test error = " + testErrKNN)
+    val testErrLR = labeleAndPredsLR.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
+    println("EAC Test Error = " + testErr + " RF test error = " + testErrRF + " KNN test error = " + testErrKNN + "  Logistic Regression test error " + testErrLR)
 
     //val testErrRF = labeleAndPredsRF.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
     //println(testErrRF)
