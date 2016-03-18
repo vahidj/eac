@@ -22,16 +22,17 @@ import org.apache.spark.sql.DataFrame
 class BalanceReader extends reader{
   def Output(indexed: DataFrame): DataFrame= {
     val transformedDf = indexed.drop("class")
-      var assembler = new VectorAssembler().setInputCols(Array("left-weight", "left-distance", "right-weight", "right-distance"))
+      .drop("left-weight").drop("left-distance").drop("right-weight").drop("right-distance")
+      var assembler = new VectorAssembler().setInputCols(Array("left-weightIndex", "left-distanceIndex", "right-weightIndex", "right-distanceIndex"))
       .setOutputCol("features")
       var output = assembler.transform(transformedDf)
       return output
   }
 
   def DFTransformed(indexed: DataFrame): RDD[LabeledPoint] = {
-    val transformed = indexed.map(x => new LabeledPoint(x.get(0).asInstanceOf[Double],
-      new DenseVector(Array(x.get(1).asInstanceOf[Double], x.get(2).asInstanceOf[Double], x.get(3).asInstanceOf[Double],
-        x.get(4).asInstanceOf[Double]))))
+    val transformed = indexed.map(x => new LabeledPoint(x.get(5).asInstanceOf[Double],
+      new DenseVector(Array(x.get(6).asInstanceOf[Double], x.get(7).asInstanceOf[Double], x.get(8).asInstanceOf[Double],
+        x.get(9).asInstanceOf[Double]))))
     return transformed
   }
   def Indexed(FilePath:String, schemaString:String, sc: SparkContext): DataFrame= {
@@ -42,6 +43,14 @@ class BalanceReader extends reader{
     val balanceDataFrame = sqlContext.createDataFrame(rowRDD, schema)
     var indexer = new StringIndexer().setInputCol("class").setOutputCol("classIndex").fit(balanceDataFrame)
     var indexed = indexer.transform(balanceDataFrame)
+    indexer = new StringIndexer().setInputCol("left-weight").setOutputCol("left-weightIndex").fit(indexed)
+    indexed = indexer.transform(indexed)
+    indexer = new StringIndexer().setInputCol("left-distance").setOutputCol("left-distanceIndex").fit(indexed)
+    indexed = indexer.transform(indexed)
+    indexer = new StringIndexer().setInputCol("right-weight").setOutputCol("right-weightIndex").fit(indexed)
+    indexed = indexer.transform(indexed)
+    indexer = new StringIndexer().setInputCol("right-distance").setOutputCol("right-distanceIndex").fit(indexed)
+    indexed = indexer.transform(indexed)
     return indexed
   }
 
