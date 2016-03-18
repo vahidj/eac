@@ -67,6 +67,8 @@ class adultReader extends reader {
         x.get(18).asInstanceOf[Double], x.get(19).asInstanceOf[Double], x.get(20).asInstanceOf[Double],x.get(21).asInstanceOf[Double], x.get(22).asInstanceOf[Double]))))
     return transformed
   }
-   
-   
+
+  override def numberOfClasses: Int = 1
+
+  override def categoricalFeaturesInfo: Map[Int, Int] = Map[Int, Int]((0,4),(1,4),(2,4),(3,3),(4,3),(5,3))
 }

@@ -33,17 +33,20 @@ object KNNTester {
     val filePathAdult="/Users/vjalali/Documents/Acad/eac/datasets/adult/adult.data"
     println(EACConfig.BASEPATH)
     val filePathCar= EACConfig.BASEPATH + "datasets/careval/car.data"
+    val filePathBalance = EACConfig.BASEPATH + "datasets/balance/balance-scale.data"
     val schemaStringAdult = "age workclass fnlwgt education education-num marital occupation relationship race sex capital-gain capital-loss hours-per-week country income"
     val schemaStringCar= "buying maint doors persons lug_boot safety acceptability"
-    val readr= new carReader // new adultReader
-    val indexed = readr.Indexed(filePathCar, schemaStringCar,sc)
+    val schemaStringBalance = "class left-weight left-distance right-weight right-distance"
+    //val readr= new carReader // new adultReader
+    val readr = new BalanceReader
+    val indexed = readr.Indexed(filePathBalance/*filePathCar*/, schemaStringBalance /*schemaStringCar*/,sc)
     val transformed = readr.DFTransformed(indexed)
     val output = readr.Output(indexed)
     
     val splits = transformed.randomSplit(Array(0.7, 0.3))
     val (trainingData, testData) = (splits(0), splits(1))
-    val numClasses = 4
-    val categoricalFeaturesInfo = Map[Int, Int]((0,4),(1,4),(2,4),(3,3),(4,3),(5,3))
+    //val numClasses = 4
+    //val categoricalFeaturesInfo = Map[Int, Int]((0,4),(1,4),(2,4),(3,3),(4,3),(5,3))
     val numTrees = 100 // Use more in practice.
     val featureSubsetStrategy = "auto" // Let the algorithm choose.
     val impurity = "gini"
@@ -76,9 +79,9 @@ object KNNTester {
     //  .setNumFolds(nfolds)
 
     val model = RandomForest.trainClassifier(trainingData.toJavaRDD(),
-      numClasses, categoricalFeaturesInfo, numTrees, featureSubsetStrategy, impurity, maxDepth, maxBins, 10)
+      readr.numberOfClasses, readr.categoricalFeaturesInfo, numTrees, featureSubsetStrategy, impurity, maxDepth, maxBins, 10)
 
-    val lrModel = new LogisticRegressionWithLBFGS().setNumClasses(4).run(trainingData)
+    val lrModel = new LogisticRegressionWithLBFGS().setNumClasses(readr.numberOfClasses).run(trainingData)
     val nbModel = NaiveBayes.train(trainingData, lambda = 1.0, modelType = "multinomial")
     val numIterations = 100
     //val svmModel = SVMWithSGD.train(trainingData, numIterations)

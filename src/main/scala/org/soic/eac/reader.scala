@@ -8,4 +8,6 @@ trait reader {
   def Output(indexed: DataFrame):DataFrame
   def Indexed(FilePath:String, schemaString:String, sc: SparkContext): DataFrame
   def DFTransformed(indexed: DataFrame): RDD[LabeledPoint]
+  def numberOfClasses: Int
+  def categoricalFeaturesInfo: Map[Int, Int]
   }

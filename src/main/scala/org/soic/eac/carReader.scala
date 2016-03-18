@@ -61,5 +61,8 @@ class carReader extends reader {
     indexed = indexer.transform(indexed)
     return indexed
   }
-  
+
+  override def numberOfClasses: Int = 4
+
+  override def categoricalFeaturesInfo: Map[Int, Int] = Map[Int, Int]((0,4),(1,4),(2,4),(3,3),(4,3),(5,3))
 }
