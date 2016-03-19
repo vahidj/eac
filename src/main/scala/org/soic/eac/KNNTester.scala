@@ -35,9 +35,11 @@ object KNNTester {
     val filePathCar= EACConfig.BASEPATH + "datasets/careval/car.data"
     val filePathBalance = EACConfig.BASEPATH + "datasets/balance/balance-scale.data"
     val filePathAdult = EACConfig.BASEPATH + "datasets/adult/adultCleaned.data"
+    val filePathBC = EACConfig.BASEPATH + "datasets/breastcancer/bcCleaned.data"
     val schemaStringAdult = "age workclass fnlwgt education education-num marital occupation relationship race sex capital-gain capital-loss hours-per-week country income"
     val schemaStringCar= "buying maint doors persons lug_boot safety acceptability"
     val schemaStringBalance = "class left-weight left-distance right-weight right-distance"
+    val schemaStringBC = "clump_thickness u_cell_size u_cell_shape marginal_adhesion single_epithelial bare_nuclei bland_chromatin normal_nucleoli mitoses class"
     //val readr= new carReader // new adultReader
     val readr = new AdultReader
     val indexed = readr.Indexed(filePathAdult /*filePathBalance*//*filePathCar*/, schemaStringAdult /*schemaStringBalance*/ /*schemaStringCar*/,sc)
