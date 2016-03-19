@@ -18,7 +18,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
 
 // reads adult data set
-class adultReader extends reader {
+class AdultReader extends reader {
    def Indexed(FilePath:String, schemaString:String, sc: SparkContext): DataFrame= {
     val rawData = sc.textFile(FilePath)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
@@ -55,7 +55,10 @@ class adultReader extends reader {
       drop("sex").
       drop("country").
       drop("income")
-      var assembler = new VectorAssembler().setInputCols(Array("workclassIndex", "educationIndex", "maritalIndex", "occupationIndex", "relationshipIndex", "raceIndex", "sexIndex", "countryIndex"))
+      var assembler = new VectorAssembler().setInputCols(Array("age","workclassIndex", "fnlwgt",
+        "educationIndex", "education-num", "maritalIndex", "occupationIndex",
+        "relationshipIndex", "raceIndex", "sexIndex", "capital-gain", "capital-loss",
+        "hours-per-week","countryIndex"))
       .setOutputCol("features")
       var output = assembler.transform(transformedDf)
       return output
@@ -63,12 +66,15 @@ class adultReader extends reader {
    
    def DFTransformed(indexed: DataFrame): RDD[LabeledPoint] = {
     val transformed = indexed.map(x => new LabeledPoint(x.get(23).asInstanceOf[Double],
-      new DenseVector(Array(x.get(0).asInstanceOf[Double],x.get(2).asInstanceOf[Double],x.get(4).asInstanceOf[Double],x.get(10).asInstanceOf[Double], x.get(11).asInstanceOf[Double], x.get(12).asInstanceOf[Double], x.get(15).asInstanceOf[Double], x.get(16).asInstanceOf[Double], x.get(17).asInstanceOf[Double],
-        x.get(18).asInstanceOf[Double], x.get(19).asInstanceOf[Double], x.get(20).asInstanceOf[Double],x.get(21).asInstanceOf[Double], x.get(22).asInstanceOf[Double]))))
+      new DenseVector(Array(x.get(0).asInstanceOf[Double],x.get(15).asInstanceOf[Double],x.get(2).asInstanceOf[Double],
+        x.get(16).asInstanceOf[Double], x.get(4).asInstanceOf[Double], x.get(17).asInstanceOf[Double],
+        x.get(18).asInstanceOf[Double], x.get(19).asInstanceOf[Double], x.get(20).asInstanceOf[Double],
+        x.get(21).asInstanceOf[Double], x.get(10).asInstanceOf[Double], x.get(11).asInstanceOf[Double],
+        x.get(12).asInstanceOf[Double], x.get(22).asInstanceOf[Double]))))
     return transformed
   }
 
-  override def numberOfClasses: Int = 1
+  override def numberOfClasses: Int = 2
 
-  override def categoricalFeaturesInfo: Map[Int, Int] = Map[Int, Int]((0,4),(1,4),(2,4),(3,3),(4,3),(5,3))
+  override def categoricalFeaturesInfo: Map[Int, Int] = Map[Int, Int]((1,7),(3,16),(5,7),(6,14),(7,6),(8,5),(9,2),(14,41))
 }

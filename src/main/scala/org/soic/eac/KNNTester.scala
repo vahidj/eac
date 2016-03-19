@@ -30,18 +30,19 @@ object KNNTester {
 
   def main(args: Array[String]) = {
     val sc: SparkContext = new SparkContext()
-    val filePathAdult="/Users/vjalali/Documents/Acad/eac/datasets/adult/adult.data"
+    //val filePathAdult="/Users/vjalali/Documents/Acad/eac/datasets/adult/adult.data"
     println(EACConfig.BASEPATH)
     val filePathCar= EACConfig.BASEPATH + "datasets/careval/car.data"
     val filePathBalance = EACConfig.BASEPATH + "datasets/balance/balance-scale.data"
+    val filePathAdult = EACConfig.BASEPATH + "datasets/adult/adult.data"
     val schemaStringAdult = "age workclass fnlwgt education education-num marital occupation relationship race sex capital-gain capital-loss hours-per-week country income"
     val schemaStringCar= "buying maint doors persons lug_boot safety acceptability"
     val schemaStringBalance = "class left-weight left-distance right-weight right-distance"
     //val readr= new carReader // new adultReader
-    val readr = new BalanceReader
-    val indexed = readr.Indexed(filePathBalance/*filePathCar*/, schemaStringBalance /*schemaStringCar*/,sc)
+    val readr = new AdultReader
+    val indexed = readr.Indexed(filePathCar /*filePathBalance*//*filePathCar*/, schemaStringCar /*schemaStringBalance*/ /*schemaStringCar*/,sc)
     val transformed = readr.DFTransformed(indexed)
-    val output = readr.Output(indexed)
+    //val output = readr.Output(indexed)
     
     val splits = transformed.randomSplit(Array(0.7, 0.3))
     val (trainingData, testData) = (splits(0), splits(1))
