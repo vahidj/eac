@@ -39,7 +39,7 @@ object KNNTester {
     val schemaStringCar= "buying maint doors persons lug_boot safety acceptability"
     val schemaStringBalance = "class left-weight left-distance right-weight right-distance"
     //val readr= new carReader // new adultReader
-    val readr = new AdultReader
+    val readr = new CarReader
     val indexed = readr.Indexed(filePathCar /*filePathBalance*//*filePathCar*/, schemaStringCar /*schemaStringBalance*/ /*schemaStringCar*/,sc)
     val transformed = readr.DFTransformed(indexed)
     //val output = readr.Output(indexed)
@@ -62,7 +62,7 @@ object KNNTester {
     //println("+++++++++++++++++++++++++++++++++++" + tmp.toString())
 
     val nfolds: Int = 20
-    val knn = new EAC(10, 10, 10, trainingData, testData)
+    val knn = new EAC(10, 10, 10, trainingData, testData, readr)
     //val neighbors = testData.zipWithIndex().map{case (k, v) => (v, k)}
     //  .map(r => (r._1.asInstanceOf[Int], knn.getSortedNeighbors(r._2.features)))
 

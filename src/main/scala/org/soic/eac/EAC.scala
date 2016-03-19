@@ -18,7 +18,7 @@ import scala.collection._
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
-class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoint])
+class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoint], reader:Reader)
   extends Serializable with Logging {
   def setK(k: Int): EAC = {
     this.k = k
@@ -69,15 +69,20 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
     var featureCounter = 0
     r1.foreach(f1 => {
       val f2 = r2(featureCounter)
-      if (ruleMizan(featureCounter).contains(f1, f2))
-        distance = distance + scala.math.pow(ruleMizan(featureCounter)((f1, f2)), 2)
-      else if (ruleMizan(featureCounter).contains(f2, f1))
-        distance = distance + scala.math.pow(ruleMizan(featureCounter)((f2, f1)), 2)
-      else if (f1 != f2){
-		//println()
-		//println(f1 + "   " + f2)
-        distance = distance + 1.0/(r1.length)
-	  }
+      if (reader.categoricalFeaturesInfo.keySet.contains(featureCounter)) {
+        if (ruleMizan(featureCounter).contains(f1, f2))
+          distance = distance + scala.math.pow(ruleMizan(featureCounter)((f1, f2)), 2)
+        else if (ruleMizan(featureCounter).contains(f2, f1))
+          distance = distance + scala.math.pow(ruleMizan(featureCounter)((f2, f1)), 2)
+        else if (f1 != f2) {
+          //println()
+          //println(f1 + "   " + f2)
+          distance = distance + 1.0 ///(r1.length)
+        }
+      }
+      else{
+        distance = distance + Math.abs((f1._1 - f1._2) - (f2._1 - f2._2))/(2 * reader.numericalFeaturesInfo(featureCounter))
+      }
       featureCounter += 1
     })
     math.sqrt(distance)
@@ -109,14 +114,18 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
       val f2 = c2.toArray(featureCounter)
       val smaller = Math.min(f1, f2)
       val greater = Math.max(f1,f2)
-      if (mizan(featureCounter).contains(smaller, greater))
-        distance = distance + scala.math.pow(mizan(featureCounter)((smaller, greater)), 2)
-      else if (smaller != greater){
-		//println(mizan.toString())
-		//println(f1 + "    " + f2)
-		//System.exit(0)
-        distance = distance + 1.0/(c1.toArray.length)
-	  }
+      if (reader.categoricalFeaturesInfo.keySet.contains(featureCounter)) {
+        if (mizan(featureCounter).contains(smaller, greater))
+          distance = distance + scala.math.pow(mizan(featureCounter)((smaller, greater)), 2)
+        else if (smaller != greater) {
+          //println(mizan.toString())
+          //println(f1 + "    " + f2)
+          //System.exit(0)
+          distance = distance + 1.0 /// (c1.toArray.length)
+        }
+      }
+      else
+        distance = distance + math.abs(f1-f2)/reader.numericalFeaturesInfo(featureCounter)
       featureCounter += 1
     })
 	//println(test)

@@ -19,7 +19,7 @@ import org.apache.spark.sql.DataFrame
 /**
   * Created by vjalali on 3/17/16.
   */
-class BalanceReader extends reader{
+class BalanceReader extends Reader{
   def Output(indexed: DataFrame): DataFrame= {
     val transformedDf = indexed.drop("class")
       .drop("left-weight").drop("left-distance").drop("right-weight").drop("right-distance")
@@ -57,4 +57,6 @@ class BalanceReader extends reader{
   override def numberOfClasses: Int = 3
 
   override def categoricalFeaturesInfo: Map[Int, Int] = Map[Int, Int]((0,5),(1,5),(2,5),(3,5))
+
+  override def numericalFeaturesInfo: Map[Int, Double] = Map[Int, Double]()
 }

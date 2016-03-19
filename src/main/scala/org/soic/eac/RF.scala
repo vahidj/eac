@@ -32,7 +32,7 @@ object RF {
     val filePathCar= "/Users/vjalali/Documents/Acad/eac/datasets/careval/car.data"
     val schemaStringAdult = "age workclass fnlwgt education education-num marital occupation relationship race sex capital-gain capital-loss hours-per-week country income"
     val schemaStringCar= "buying maint doors persons lug_boot safety acceptability"
-    val readr= new carReader // new adultReader
+    val readr= new CarReader // new adultReader
     val indexed = readr.Indexed(filePathCar, schemaStringCar,sc)
     val transformed = readr.DFTransformed(indexed)
     val output = readr.Output(indexed)

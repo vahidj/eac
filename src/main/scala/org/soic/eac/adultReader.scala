@@ -18,7 +18,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
 
 // reads adult data set
-class AdultReader extends reader {
+class AdultReader extends Reader {
    def Indexed(FilePath:String, schemaString:String, sc: SparkContext): DataFrame= {
     val rawData = sc.textFile(FilePath)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
@@ -77,4 +77,6 @@ class AdultReader extends reader {
   override def numberOfClasses: Int = 2
 
   override def categoricalFeaturesInfo: Map[Int, Int] = Map[Int, Int]((1,7),(3,16),(5,7),(6,14),(7,6),(8,5),(9,2),(14,41))
+
+  override def numericalFeaturesInfo: Map[Int, Double] = Map[Int, Double]((0,13.13466),(2,105653),(4,2.549995),(10,7406.346),(11,404.2984),(12,11.97998))
 }

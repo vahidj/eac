@@ -17,7 +17,7 @@ import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
 // reads car dataset
-class carReader extends reader {
+class CarReader extends Reader {
 
   def Output(indexed: DataFrame): DataFrame= {
     val transformedDf = indexed.drop("buying").
@@ -65,4 +65,6 @@ class carReader extends reader {
   override def numberOfClasses: Int = 4
 
   override def categoricalFeaturesInfo: Map[Int, Int] = Map[Int, Int]((0,4),(1,4),(2,4),(3,3),(4,3),(5,3))
+
+  override def numericalFeaturesInfo: Map[Int, Double] = Map[Int, Double]()
 }
