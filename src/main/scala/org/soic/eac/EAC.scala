@@ -18,7 +18,8 @@ import scala.collection._
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
-class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int, data: RDD[LabeledPoint], testData: RDD[LabeledPoint], reader:Reader)
+class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int, data: RDD[LabeledPoint],
+          testData: RDD[LabeledPoint], categoricalFeaturesInfo: Map[Int, Int], numericalFeaturesInfo: Map[Int, Double])
   extends Serializable with Logging {
   def setK(k: Int): EAC = {
     this.k = k
@@ -69,7 +70,7 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
     var featureCounter = 0
     r1.foreach(f1 => {
       val f2 = r2(featureCounter)
-      if (reader.categoricalFeaturesInfo.keySet.contains(featureCounter)) {
+      if (categoricalFeaturesInfo.keySet.contains(featureCounter)) {
         if (ruleMizan(featureCounter).contains(f1, f2))
           distance = distance + scala.math.pow(ruleMizan(featureCounter)((f1, f2)), 2)
         else if (ruleMizan(featureCounter).contains(f2, f1))
@@ -81,7 +82,7 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
         }
       }
       else{
-        distance = distance + Math.abs((f1._1 - f1._2) - (f2._1 - f2._2))/(2 * reader.numericalFeaturesInfo(featureCounter))
+        distance = distance + Math.abs((f1._1 - f1._2) - (f2._1 - f2._2))/(4 * numericalFeaturesInfo(featureCounter))
       }
       featureCounter += 1
     })
@@ -114,7 +115,7 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
       val f2 = c2.toArray(featureCounter)
       val smaller = Math.min(f1, f2)
       val greater = Math.max(f1,f2)
-      if (reader.categoricalFeaturesInfo.keySet.contains(featureCounter)) {
+      if (categoricalFeaturesInfo.keySet.contains(featureCounter)) {
         if (mizan(featureCounter).contains(smaller, greater))
           distance = distance + scala.math.pow(mizan(featureCounter)((smaller, greater)), 2)
         else if (smaller != greater) {
@@ -125,7 +126,7 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
         }
       }
       else
-        distance = distance + math.abs(f1-f2)/reader.numericalFeaturesInfo(featureCounter)
+        distance = distance + math.abs(f1-f2)/(4 * numericalFeaturesInfo(featureCounter))
       featureCounter += 1
     })
 	//println(test)

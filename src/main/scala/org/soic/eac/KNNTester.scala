@@ -34,13 +34,13 @@ object KNNTester {
     println(EACConfig.BASEPATH)
     val filePathCar= EACConfig.BASEPATH + "datasets/careval/car.data"
     val filePathBalance = EACConfig.BASEPATH + "datasets/balance/balance-scale.data"
-    val filePathAdult = EACConfig.BASEPATH + "datasets/adult/adult.data"
+    val filePathAdult = EACConfig.BASEPATH + "datasets/adult/adultCleaned.data"
     val schemaStringAdult = "age workclass fnlwgt education education-num marital occupation relationship race sex capital-gain capital-loss hours-per-week country income"
     val schemaStringCar= "buying maint doors persons lug_boot safety acceptability"
     val schemaStringBalance = "class left-weight left-distance right-weight right-distance"
     //val readr= new carReader // new adultReader
-    val readr = new CarReader
-    val indexed = readr.Indexed(filePathCar /*filePathBalance*//*filePathCar*/, schemaStringCar /*schemaStringBalance*/ /*schemaStringCar*/,sc)
+    val readr = new AdultReader
+    val indexed = readr.Indexed(filePathAdult /*filePathBalance*//*filePathCar*/, schemaStringAdult /*schemaStringBalance*/ /*schemaStringCar*/,sc)
     val transformed = readr.DFTransformed(indexed)
     //val output = readr.Output(indexed)
     
@@ -62,7 +62,7 @@ object KNNTester {
     //println("+++++++++++++++++++++++++++++++++++" + tmp.toString())
 
     val nfolds: Int = 20
-    val knn = new EAC(10, 10, 10, trainingData, testData, readr)
+    val knn = new EAC(10, 10, 10, trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo)
     //val neighbors = testData.zipWithIndex().map{case (k, v) => (v, k)}
     //  .map(r => (r._1.asInstanceOf[Int], knn.getSortedNeighbors(r._2.features)))
 
