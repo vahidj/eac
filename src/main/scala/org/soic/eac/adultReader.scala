@@ -10,7 +10,7 @@ import org.apache.spark.mllib.linalg._
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.RandomForest
 import org.apache.spark.mllib.util.MLUtils
-import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.{Row, SQLContext}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
@@ -22,8 +22,12 @@ class AdultReader extends Reader {
    def Indexed(FilePath:String, schemaString:String, sc: SparkContext): DataFrame= {
     val rawData = sc.textFile(FilePath)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
-    val schema = StructType(schemaString.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
-    val rowRDD = rawData.map(_.split(",")).map(p =>  Row(p(0),p(1), p(2), p(3),p(4), p(5), p(6), p(7), p(8), p(9), p(10), p(11), p(12), p(13), p(14)))
+    val schema = StructType(schemaString.split(" ").zipWithIndex.map
+    {case (fieldName, i) =>
+      StructField(fieldName, if (numericalFeaturesInfo.keySet.contains(i)) DoubleType else StringType, true)})
+    val rowRDD = rawData.map(_.split(",")).map(p =>  Row(p(0).toDouble,p(1), p(2).toDouble, p(3),p(4).toDouble,
+      p(5), p(6), p(7), p(8), p(9),
+      p(10).toDouble, p(11).toDouble, p(12).toDouble, p(13), p(14)))
     val adultDataFrame = sqlContext.createDataFrame(rowRDD, schema)
     var indexer = new StringIndexer().setInputCol("workclass").setOutputCol("workclassIndex").fit(adultDataFrame)
     var indexed = indexer.transform(adultDataFrame)
