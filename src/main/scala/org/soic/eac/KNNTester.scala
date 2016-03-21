@@ -36,13 +36,15 @@ object KNNTester {
     val filePathBalance = EACConfig.BASEPATH + "datasets/balance/balance-scale.data"
     val filePathAdult = EACConfig.BASEPATH + "datasets/adult/adultCleaned.data"
     val filePathBC = EACConfig.BASEPATH + "datasets/breastcancer/bcCleaned.data"
+    val filePathBankruptcy = EACConfig.BASEPATH + "datasets/bankruptcy/bankruptcy.data"
     val schemaStringAdult = "age workclass fnlwgt education education-num marital occupation relationship race sex capital-gain capital-loss hours-per-week country income"
     val schemaStringCar= "buying maint doors persons lug_boot safety acceptability"
     val schemaStringBalance = "class left-weight left-distance right-weight right-distance"
     val schemaStringBC = "clump_thickness u_cell_size u_cell_shape marginal_adhesion single_epithelial bare_nuclei bland_chromatin normal_nucleoli mitoses class"
+    val schemaStringBankruptcy = "industrial_risk management_risk financial_flexibility credibility competitiveness operating_risk class"
     //val readr= new carReader // new adultReader
-    val readr = new BCReader
-    val indexed = readr.Indexed(filePathBC /*filePathBalance*//*filePathCar*/, schemaStringBC /*schemaStringBalance*/ /*schemaStringCar*/,sc)
+    val readr = new BankruptcyReader
+    val indexed = readr.Indexed(filePathBankruptcy /*filePathBalance*//*filePathCar*/, schemaStringBankruptcy /*schemaStringBalance*/ /*schemaStringCar*/,sc)
     val transformed = readr.DFTransformed(indexed)
     //val output = readr.Output(indexed)
     
