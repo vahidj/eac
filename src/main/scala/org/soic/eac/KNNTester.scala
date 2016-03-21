@@ -46,7 +46,7 @@ object KNNTester {
     val schemaStringCredit = "a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16"
     //val readr= new carReader // new adultReader
     val readr = new BankruptcyReader
-    val indexed = readr.Indexed(filePathBankruptcy /*filePathBalance*//*filePathCar*/, schemaStringBankruptcy /*schemaStringBalance*/ /*schemaStringCar*/,sc)
+    val indexed = readr.Indexed(filePathCredit /*filePathBalance*//*filePathCar*/, schemaStringCredit /*schemaStringBalance*/ /*schemaStringCar*/,sc)
     val transformed = readr.DFTransformed(indexed)
     //val output = readr.Output(indexed)
     
@@ -68,7 +68,7 @@ object KNNTester {
     //println("+++++++++++++++++++++++++++++++++++" + tmp.toString())
 
     val nfolds: Int = 20
-    val knn = new EAC(10, 10, 10, trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo)
+    val knn = new EAC(7, 7, 7, trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo)
     //val neighbors = testData.zipWithIndex().map{case (k, v) => (v, k)}
     //  .map(r => (r._1.asInstanceOf[Int], knn.getSortedNeighbors(r._2.features)))
 
