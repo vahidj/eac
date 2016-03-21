@@ -41,8 +41,8 @@ object KNNTester {
     val schemaStringBalance = "class left-weight left-distance right-weight right-distance"
     val schemaStringBC = "clump_thickness u_cell_size u_cell_shape marginal_adhesion single_epithelial bare_nuclei bland_chromatin normal_nucleoli mitoses class"
     //val readr= new carReader // new adultReader
-    val readr = new AdultReader
-    val indexed = readr.Indexed(filePathAdult /*filePathBalance*//*filePathCar*/, schemaStringAdult /*schemaStringBalance*/ /*schemaStringCar*/,sc)
+    val readr = new BCReader
+    val indexed = readr.Indexed(filePathBC /*filePathBalance*//*filePathCar*/, schemaStringBC /*schemaStringBalance*/ /*schemaStringCar*/,sc)
     val transformed = readr.DFTransformed(indexed)
     //val output = readr.Output(indexed)
     
