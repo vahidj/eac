@@ -26,9 +26,6 @@ class CreditReader extends Reader{
     val schema = StructType(schemaString.split(" ").zipWithIndex.map
     {case (fieldName, i) =>
       StructField(fieldName, if (numericalFeaturesInfo.keySet.contains(i)) DoubleType else StringType, true)})
-    //rawData.map(_.split(",")).foreach(p => {println(p); Row(p(0),p(1).toDouble, p(2).toDouble, p(3),p(4),
-    //  p(5), p(6), p(7).toDouble, p(8), p(9),
-    //  p(10).replaceFirst("^0+(?!$)", "").toDouble, p(11), p(12), p(13).replaceFirst("^0+(?!$)", "").toDouble, p(14), p(15))})
     val rowRDD = rawData.map(_.split(",")).map(p =>  Row(p(0),p(1).toDouble, p(2).toDouble, p(3), p(4),
       p(5), p(6), p(7).toDouble, p(8), p(9), p(10).toDouble, p(11), p(12), p(13).toDouble, p(14).toDouble, p(15)))
     val adultDataFrame = sqlContext.createDataFrame(rowRDD, schema)

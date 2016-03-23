@@ -464,10 +464,12 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
     var ruleFeatureStat = List[Map[(Double, Double), Int]]()
     var ruleFeatureClassStat = List[Map[((Double, Double), (Double, Double)), Int]]()
     for (i <- 0 until data.first().features.size){
-      val tmp = ruleBase4.map(x => x._2(i)).groupBy(identity).mapValues(_.size)
-      ruleFeatureStat =  ruleFeatureStat ::: List(tmp)
-      val tmp2 = ruleBase4.map(x => (x._2(i), x._1)).groupBy(identity).mapValues(_.size)
-      ruleFeatureClassStat = ruleFeatureClassStat ::: List(tmp2)
+      if (categoricalFeaturesInfo.keySet.contains(i)) {
+        val tmp = ruleBase4.map(x => x._2(i)).groupBy(identity).mapValues(_.size)
+        ruleFeatureStat = ruleFeatureStat ::: List(tmp)
+        val tmp2 = ruleBase4.map(x => (x._2(i), x._1)).groupBy(identity).mapValues(_.size)
+        ruleFeatureClassStat = ruleFeatureClassStat ::: List(tmp2)
+      }
     }
 
 
@@ -476,43 +478,45 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
     //the following while loop generates VDM between all possible pairs of values for all features in the domain
     while(ruleFeatureIt.hasNext){
       //println("feature iterator")
-      val ruleFeatureValues = ruleFeatureIt.next.keySet.toArray
-      for (i <- 0 until ruleFeatureValues.length){
-        for (j <- i+1 until ruleFeatureValues.length){
-          val v1 = ruleFeatureValues(i)
-          val v2 = ruleFeatureValues(j)
-          val v1cnt = ruleFeatureStat(ruleFeatureCounter)(v1).toInt.toDouble
-          val v2cnt = ruleFeatureStat(ruleFeatureCounter)(v2).toInt.toDouble
-          var vdm = 0.0
-          val ruleClassValsIt = ruleClassStat.keySet.iterator
-          while(ruleClassValsIt.hasNext){
-            val ruleClassVal = ruleClassValsIt.next()
-            val tmp1 = ruleFeatureClassStat(ruleFeatureCounter).getOrElse(((v1, ruleClassVal)), 0).toDouble
-            val tmp2 = ruleFeatureClassStat(ruleFeatureCounter).getOrElse(((v2, ruleClassVal)), 0).toDouble
-            vdm += Math.abs( tmp1 / v1cnt -  tmp2 / v2cnt)
-            //println(tmp1 + " " + tmp2 + " " + " " + tmp1 + " " +tmp2 +" "+ vdm)
-          }
-          //I'll put the smaller element as the first element of the tuple.
-          //this makes looking up a tuple in mizan easier in future (meaning that if I want to check the
-          // distance between two values, I'll always put the smaller value as the first element in the look up as well)
+      if (categoricalFeaturesInfo.keySet.contains(ruleFeatureCounter)) {
+        val ruleFeatureValues = ruleFeatureIt.next.keySet.toArray
+        for (i <- 0 until ruleFeatureValues.length) {
+          for (j <- i + 1 until ruleFeatureValues.length) {
+            val v1 = ruleFeatureValues(i)
+            val v2 = ruleFeatureValues(j)
+            val v1cnt = ruleFeatureStat(ruleFeatureCounter)(v1).toInt.toDouble
+            val v2cnt = ruleFeatureStat(ruleFeatureCounter)(v2).toInt.toDouble
+            var vdm = 0.0
+            val ruleClassValsIt = ruleClassStat.keySet.iterator
+            while (ruleClassValsIt.hasNext) {
+              val ruleClassVal = ruleClassValsIt.next()
+              val tmp1 = ruleFeatureClassStat(ruleFeatureCounter).getOrElse(((v1, ruleClassVal)), 0).toDouble
+              val tmp2 = ruleFeatureClassStat(ruleFeatureCounter).getOrElse(((v2, ruleClassVal)), 0).toDouble
+              vdm += Math.abs(tmp1 / v1cnt - tmp2 / v2cnt)
+              //println(tmp1 + " " + tmp2 + " " + " " + tmp1 + " " +tmp2 +" "+ vdm)
+            }
+            //I'll put the smaller element as the first element of the tuple.
+            //this makes looking up a tuple in mizan easier in future (meaning that if I want to check the
+            // distance between two values, I'll always put the smaller value as the first element in the look up as well)
 
-          //println(featureClassStat.toString())
-          ruleMizan(ruleFeatureCounter)((v1,v2)) = vdm
-          //ruleMizan(featureCounter)((v2,v1)) = vdm
-          //if (v1 <= v2) {
-          //  ruleMizan(featureCounter)((v1, v2)) = vdm
+            //println(featureClassStat.toString())
+            ruleMizan(ruleFeatureCounter)((v1, v2)) = vdm
+            //ruleMizan(featureCounter)((v2,v1)) = vdm
+            //if (v1 <= v2) {
+            //  ruleMizan(featureCounter)((v1, v2)) = vdm
             //println(vdm)
-          //}
-          //else {
-          //  ruleMizan(featureCounter)((v2, v1)) = vdm
+            //}
+            //else {
+            //  ruleMizan(featureCounter)((v2, v1)) = vdm
             //println(vdm)
-          //}
+            //}
+          }
         }
       }
       ruleFeatureCounter += 1
     }
 
-
+    //ruleMizan(0).count()
     //println(ruleMizan.toString())
     //System.exit(0)
     //println("Started building rule mizan")
