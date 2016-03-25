@@ -47,10 +47,10 @@ class BCReader extends Reader{
         x.get(16).asInstanceOf[Double], x.get(17).asInstanceOf[Double], x.get(18).asInstanceOf[Double]))))
     return transformed
   }
-  def Indexed(FilePath:String, schemaString:String, sc: SparkContext): DataFrame= {
+  def Indexed(FilePath:String, sc: SparkContext): DataFrame= {
     val rawData = sc.textFile(FilePath)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
-    val schema = StructType(schemaString.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
+    val schema = StructType(dataSchema.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
     val rowRDD = rawData.map(_.split(",")).map(p => Row(p(0), p(1), p(2), p(3), p(4), p(5), p(6), p(7), p(8), p(9)))
     val carDataFrame = sqlContext.createDataFrame(rowRDD, schema)
     var indexer = new StringIndexer().setInputCol("clump_thickness").setOutputCol("clump_thicknessIndex").fit(carDataFrame)

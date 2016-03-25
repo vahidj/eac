@@ -6,7 +6,7 @@ import org.apache.spark.SparkContext
 
 trait Reader {
   def Output(indexed: DataFrame):DataFrame
-  def Indexed(FilePath:String, schemaString:String, sc: SparkContext): DataFrame
+  def Indexed(FilePath:String, sc: SparkContext): DataFrame
   def DFTransformed(indexed: DataFrame): RDD[LabeledPoint]
   def numberOfClasses: Int
   def categoricalFeaturesInfo: Map[Int, Int]

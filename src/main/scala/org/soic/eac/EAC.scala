@@ -321,10 +321,17 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
     var featureStat = List[Map[Double, Long]]()
     var featureClassStat = List[Map[(Double, Double), Long]]()
     for (i <- 0 until data.first().features.size){
-      val tmp = data.map(x => x.features(i)).countByValue()
-      featureStat =  featureStat ::: List(tmp)
-      val tmp2 = data.map(x => (x.features(i), x.label)).countByValue()
-      featureClassStat = featureClassStat ::: List(tmp2)
+      if (categoricalFeaturesInfo.keySet.contains(i)) {
+        val tmp = data.map(x => x.features(i)).countByValue()
+        featureStat =  featureStat ::: List(tmp)
+        val tmp2 = data.map(x => (x.features(i), x.label)).countByValue()
+        featureClassStat = featureClassStat ::: List(tmp2)
+      }
+      else
+      {
+        featureStat =  featureStat ::: List()
+        featureClassStat = featureClassStat ::: List()
+      }
     }
 
     //println(featureStat.toString())
@@ -375,33 +382,35 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
     while(featureIt.hasNext){
       //println("feature iterator")
       val featureValues = featureIt.next.keySet.toArray
-      for (i <- 0 until featureValues.length){
-        for (j <- i+1 until featureValues.length){
-          val v1 = featureValues(i).asInstanceOf[Double]
-          val v2 = featureValues(j).asInstanceOf[Double]
-          val v1cnt = featureStat(featureCounter)(v1).toInt.toDouble
-          val v2cnt = featureStat(featureCounter)(v2).toInt.toDouble
-          var vdm = 0.0
-          val classValsIt = classStat.keySet.iterator
-          while(classValsIt.hasNext){
-            val classVal = classValsIt.next()
-            val tmp1 = featureClassStat(featureCounter).getOrElse(((v1, classVal)), 0L).toInt.toDouble
-            val tmp2 = featureClassStat(featureCounter).getOrElse(((v2, classVal)), 0L).toInt.toDouble
-            vdm += Math.abs( tmp1 / v1cnt -  tmp2 / v2cnt)
-            //println(tmp1 + " " + tmp2 + " " + " " + tmp1 + " " +tmp2 +" "+ vdm)
-          }
-          //I'll put the smaller element as the first element of the tuple.
-          //this makes looking up a tuple in mizan easier in future (meaning that if I want to check the
-          // distance between two values, I'll always put the smaller value as the first element in the look up as well)
+      if (categoricalFeaturesInfo.keySet.contains(featureCounter)) {
+        for (i <- 0 until featureValues.length) {
+          for (j <- i + 1 until featureValues.length) {
+            val v1 = featureValues(i).asInstanceOf[Double]
+            val v2 = featureValues(j).asInstanceOf[Double]
+            val v1cnt = featureStat(featureCounter)(v1).toInt.toDouble
+            val v2cnt = featureStat(featureCounter)(v2).toInt.toDouble
+            var vdm = 0.0
+            val classValsIt = classStat.keySet.iterator
+            while (classValsIt.hasNext) {
+              val classVal = classValsIt.next()
+              val tmp1 = featureClassStat(featureCounter).getOrElse(((v1, classVal)), 0L).toInt.toDouble
+              val tmp2 = featureClassStat(featureCounter).getOrElse(((v2, classVal)), 0L).toInt.toDouble
+              vdm += Math.abs(tmp1 / v1cnt - tmp2 / v2cnt)
+              //println(tmp1 + " " + tmp2 + " " + " " + tmp1 + " " +tmp2 +" "+ vdm)
+            }
+            //I'll put the smaller element as the first element of the tuple.
+            //this makes looking up a tuple in mizan easier in future (meaning that if I want to check the
+            // distance between two values, I'll always put the smaller value as the first element in the look up as well)
 
-          //println(featureClassStat.toString())
-          if (v1 <= v2) {
-            mizan(featureCounter)((v1, v2)) = vdm
-            //println(vdm)
-          }
-          else {
-            mizan(featureCounter)((v2, v1)) = vdm
-            //println(vdm)
+            //println(featureClassStat.toString())
+            if (v1 <= v2) {
+              mizan(featureCounter)((v1, v2)) = vdm
+              //println(vdm)
+            }
+            else {
+              mizan(featureCounter)((v2, v1)) = vdm
+              //println(vdm)
+            }
           }
         }
       }
@@ -469,6 +478,10 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
         ruleFeatureStat = ruleFeatureStat ::: List(tmp)
         val tmp2 = ruleBase4.map(x => (x._2(i), x._1)).groupBy(identity).mapValues(_.size)
         ruleFeatureClassStat = ruleFeatureClassStat ::: List(tmp2)
+      }
+      else{
+        ruleFeatureStat = ruleFeatureStat ::: List()
+        ruleFeatureClassStat = ruleFeatureClassStat ::: List()
       }
     }
 

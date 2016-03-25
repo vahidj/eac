@@ -35,10 +35,10 @@ class BalanceReader extends Reader{
         x.get(9).asInstanceOf[Double]))))
     return transformed
   }
-  def Indexed(FilePath:String, schemaString:String, sc: SparkContext): DataFrame= {
+  def Indexed(FilePath:String, sc: SparkContext): DataFrame= {
     val rawData = sc.textFile(FilePath)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
-    val schema = StructType(schemaString.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
+    val schema = StructType(dataSchema.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
     val rowRDD = rawData.map(_.split(",")).map(p => Row(p(0), p(1), p(2), p(3), p(4)))
     val balanceDataFrame = sqlContext.createDataFrame(rowRDD, schema)
     var indexer = new StringIndexer().setInputCol("class").setOutputCol("classIndex").fit(balanceDataFrame)

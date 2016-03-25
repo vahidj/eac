@@ -19,10 +19,10 @@ import org.apache.spark.sql.DataFrame
 
 // reads adult data set
 class AdultReader extends Reader {
-   def Indexed(FilePath:String, schemaString:String, sc: SparkContext): DataFrame= {
+   def Indexed(FilePath:String, sc: SparkContext): DataFrame= {
     val rawData = sc.textFile(FilePath)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
-    val schema = StructType(schemaString.split(" ").zipWithIndex.map
+    val schema = StructType(dataSchema.split(" ").zipWithIndex.map
     {case (fieldName, i) =>
       StructField(fieldName, if (numericalFeaturesInfo.keySet.contains(i)) DoubleType else StringType, true)})
     val rowRDD = rawData.map(_.split(",")).map(p =>  Row(p(0).toDouble,p(1), p(2).toDouble, p(3),p(4).toDouble,
