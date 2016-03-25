@@ -47,8 +47,8 @@ object KNNTester {
     val schemaStringBankruptcy = "industrial_risk management_risk financial_flexibility credibility competitiveness operating_risk class"
     val schemaStringCredit = "a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16"
     //val readr= new carReader // new adultReader
-    val readr = new BalanceReader
-    val indexed = readr.Indexed(filePathBalance /*filePathBalance*//*filePathCar*/ /*schemaStringBalance*/ /*schemaStringCar*/,sc)
+    val readr = new CreditReader
+    val indexed = readr.Indexed(filePathCredit /*filePathBalance*//*filePathCar*/ /*schemaStringBalance*/ /*schemaStringCar*/,sc)
     val transformed = readr.DFTransformed(indexed)
     //val output = readr.Output(indexed)
 
