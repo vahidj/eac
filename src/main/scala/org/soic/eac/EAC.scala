@@ -491,8 +491,8 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
     //the following while loop generates VDM between all possible pairs of values for all features in the domain
     while(ruleFeatureIt.hasNext){
       //println("feature iterator")
+      val ruleFeatureValues = ruleFeatureIt.next.keySet.toArray
       if (categoricalFeaturesInfo.keySet.contains(ruleFeatureCounter)) {
-        val ruleFeatureValues = ruleFeatureIt.next.keySet.toArray
         for (i <- 0 until ruleFeatureValues.length) {
           for (j <- i + 1 until ruleFeatureValues.length) {
             val v1 = ruleFeatureValues(i)
