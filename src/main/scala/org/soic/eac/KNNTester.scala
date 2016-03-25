@@ -7,7 +7,8 @@ import org.apache.spark.ml.tuning.{TrainValidationSplit, ParamGridBuilder, Cross
 import org.apache.spark.mllib.classification.{SVMWithSGD, NaiveBayes, LogisticRegressionWithLBFGS}
 import org.apache.spark.mllib.linalg._
 import org.apache.spark.mllib.regression.LabeledPoint
-import org.apache.spark.mllib.tree.RandomForest
+import org.apache.spark.mllib.tree.{GradientBoostedTrees, RandomForest}
+import org.apache.spark.mllib.tree.configuration.BoostingStrategy
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
@@ -15,6 +16,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.{Row, SQLContext}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.soic.eac.EACConfig._
+import java.io._
 
 /**
   * Created by vjalali on 2/27/16.
@@ -49,110 +51,128 @@ object KNNTester {
     val indexed = readr.Indexed(filePathCredit /*filePathBalance*//*filePathCar*/, schemaStringCredit /*schemaStringBalance*/ /*schemaStringCar*/,sc)
     val transformed = readr.DFTransformed(indexed)
     //val output = readr.Output(indexed)
-    
-    val splits = transformed.randomSplit(Array(0.7, 0.3))
-    val (trainingData, testData) = (splits(0), splits(1))
-    //val numClasses = 4
-    //val categoricalFeaturesInfo = Map[Int, Int]((0,4),(1,4),(2,4),(3,3),(4,3),(5,3))
-    val numTrees = 100 // Use more in practice.
-    val featureSubsetStrategy = "auto" // Let the algorithm choose.
-    val impurity = "gini"
-    val maxDepth = 5
-    val maxBins = 32
 
-    //trainingData.saveAsTextFile("train")
-    //testData.saveAsTextFile("test")
-    //val tmp: RDD[String] = sc.textFile(EACConfig.BASEPATH + "train.txt")
-    //println(tmp.count().asInstanceOf[Int])
-    //tmp.foreach(r => println(r.toString))
-    //println("+++++++++++++++++++++++++++++++++++" + tmp.toString())
+    val pw = new PrintWriter(new File("results_Balance.txt"))
+    for (i <- 0 until 1) {
+      val splits = transformed.randomSplit(Array(0.7, 0.3))
+      val (trainingData, testData) = (splits(0), splits(1))
+      //val numClasses = 4
+      //val categoricalFeaturesInfo = Map[Int, Int]((0,4),(1,4),(2,4),(3,3),(4,3),(5,3))
+      val numTrees = 100 // Use more in practice.
+      val featureSubsetStrategy = "auto" // Let the algorithm choose.
+      val impurity = "gini"
+      val maxDepth = 5
+      val maxBins = 32
 
-    val nfolds: Int = 20
-    val knn = new EAC(7, 7, 7, trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo)
-    //val neighbors = testData.zipWithIndex().map{case (k, v) => (v, k)}
-    //  .map(r => (r._1.asInstanceOf[Int], knn.getSortedNeighbors(r._2.features)))
+      //trainingData.saveAsTextFile("train")
+      //testData.saveAsTextFile("test")
+      //val tmp: RDD[String] = sc.textFile(EACConfig.BASEPATH + "train.txt")
+      //println(tmp.count().asInstanceOf[Int])
+      //tmp.foreach(r => println(r.toString))
+      //println("+++++++++++++++++++++++++++++++++++" + tmp.toString())
 
-    //neighbors.saveAsTextFile("neighbors")
-    //val paramGrid = new ParamGridBuilder().addGrid(knn.k, Array(1,2,3,4,5,6,7)).build()
-    //val paramGrid = new ParamGridBuilder().addGrid(rf.numTrees, Array(1,5,10,30,60,90)).addGrid(rf.maxDepth, Array(1,2,3,4,5,6,7,8,9,10))
-    //  .addGrid(rf.maxBins, Array(30, 60, 90)).build()
-    /*val trainValidationSplit = new TrainValidationSplit()
+      val nfolds: Int = 20
+      val knn = new EAC(7, 7, 7, trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo)
+      //val neighbors = testData.zipWithIndex().map{case (k, v) => (v, k)}
+      //  .map(r => (r._1.asInstanceOf[Int], knn.getSortedNeighbors(r._2.features)))
+
+      //neighbors.saveAsTextFile("neighbors")
+      //val paramGrid = new ParamGridBuilder().addGrid(knn.k, Array(1,2,3,4,5,6,7)).build()
+      //val paramGrid = new ParamGridBuilder().addGrid(rf.numTrees, Array(1,5,10,30,60,90)).addGrid(rf.maxDepth, Array(1,2,3,4,5,6,7,8,9,10))
+      //  .addGrid(rf.maxBins, Array(30, 60, 90)).build()
+      /*val trainValidationSplit = new TrainValidationSplit()
       .setEstimator(rf)
       .setEvaluator(new MulticlassClassificationEvaluator())
       .setEstimatorParamMaps(paramGrid)*/
 
-    //val cv = new CrossValidator().setEstimator(knn).setEvaluator(new MulticlassClassificationEvaluator())
-    //  .setEstimatorParamMaps(paramGrid)
-    //  .setNumFolds(nfolds)
+      //val cv = new CrossValidator().setEstimator(knn).setEvaluator(new MulticlassClassificationEvaluator())
+      //  .setEstimatorParamMaps(paramGrid)
+      //  .setNumFolds(nfolds)
 
-    val model = RandomForest.trainClassifier(trainingData.toJavaRDD(),
-      readr.numberOfClasses, readr.categoricalFeaturesInfo, numTrees, featureSubsetStrategy, impurity, maxDepth, maxBins, 10)
+      val model = RandomForest.trainClassifier(trainingData.toJavaRDD(),
+        readr.numberOfClasses, readr.categoricalFeaturesInfo, numTrees, featureSubsetStrategy, impurity, maxDepth, maxBins, 10)
 
-    val lrModel = new LogisticRegressionWithLBFGS().setNumClasses(readr.numberOfClasses).run(trainingData)
-    val nbModel = NaiveBayes.train(trainingData, lambda = 1.0, modelType = "multinomial")
-    val numIterations = 100
-    //val svmModel = SVMWithSGD.train(trainingData, numIterations)
-    //svmModel.clearThreshold()
-    //println("++++++++++++++++++++++++++++++++++++++++\n"+cv.fit(output).bestModel.params.toString())
-    //cv.fit(output).bestModel.params.foreach(x => println(x))
-    
-    
-    // Extracting best model params
-    
-    //val cvModel= cv.fit(output)
-    //val paramMap = {cvModel.getEstimatorParamMaps
-    //       .zip(cvModel.avgMetrics)
-    //       .maxBy(_._2)
-    //       ._1}
-    //println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-    //println("Best Model params\n"+ paramMap)
+      var boostingStrategy = BoostingStrategy.defaultParams("Classification")
+      boostingStrategy.setNumIterations(3)
+      boostingStrategy.treeStrategy.setNumClasses(2)
+      boostingStrategy.treeStrategy.setMaxDepth(5)
+      //boostingStrategy.treeStrategy.categoricalFeaturesInfo = Map[Int, Int]()
 
-    //paramMap.toSeq.filter(_.param.name == "maxBins")(0).value
+      //val gbModel = GradientBoostedTrees.train(trainingData, boostingStrategy)
+      val lrModel = new LogisticRegressionWithLBFGS().setNumClasses(readr.numberOfClasses).run(trainingData)
+      val nbModel = NaiveBayes.train(trainingData, lambda = 1.0, modelType = "multinomial")
+      val numIterations = 100
+      //val svmModel = SVMWithSGD.train(trainingData, numIterations)
+      //svmModel.clearThreshold()
+      //println("++++++++++++++++++++++++++++++++++++++++\n"+cv.fit(output).bestModel.params.toString())
+      //cv.fit(output).bestModel.params.foreach(x => println(x))
 
-    knn.train()
 
-    /*println(knn.predict(testData.first().features))
+      // Extracting best model params
+
+      //val cvModel= cv.fit(output)
+      //val paramMap = {cvModel.getEstimatorParamMaps
+      //       .zip(cvModel.avgMetrics)
+      //       .maxBy(_._2)
+      //       ._1}
+      //println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+      //println("Best Model params\n"+ paramMap)
+
+      //paramMap.toSeq.filter(_.param.name == "maxBins")(0).value
+
+      knn.train()
+
+      /*println(knn.predict(testData.first().features))
     val labelAndPreds = testData.map{
       point => val prediction = knn.predict(point.features)
         //println(point.label + " " + prediction)
         (point.label, prediction)
     }*/
-    //val labelAndPreds = knn.getPredAndLabels()
-    //println(testData.count().asInstanceOf[Int])
-    val labeleAndPredsRF = testData.map{
-      point => val prediction = model.predict(point.features)
-        (point.label, prediction)
-    }
+      //val labelAndPreds = knn.getPredAndLabels()
+      //println(testData.count().asInstanceOf[Int])
+      val labeleAndPredsRF = testData.map {
+        point => val prediction = model.predict(point.features)
+          (point.label, prediction)
+      }
 
-    val labeleAndPredsLR = testData.map{
-      point => val prediction = lrModel.predict(point.features)
-        (point.label, prediction)
-    }
+      /*val labeleAndPredsGB = testData.map {
+        point => val prediction = gbModel.predict(point.features)
+          (point.label, prediction)
+      }*/
 
-    val labeleAndPredsNB = testData.map{
-      point => val prediction = nbModel.predict(point.features)
-        (point.label, prediction)
-    }
+      val labeleAndPredsLR = testData.map {
+        point => val prediction = lrModel.predict(point.features)
+          (point.label, prediction)
+      }
 
-    /*val labeleAndPredsSVM = testData.map{
+      val labeleAndPredsNB = testData.map {
+        point => val prediction = nbModel.predict(point.features)
+          (point.label, prediction)
+      }
+
+      /*val labeleAndPredsSVM = testData.map{
       point => val prediction = svmModel.predict(point.features)
         (point.label, prediction)
     }*/
 
-    val labelAndPreds = knn.getPredAndLabels()
-    val labelAndPredKnn = knn.getPredAndLabelsKNN()
-    //println(labelAndPreds)
-    //println(labelAndPreds.filter(r => r._1 != r._2).count())
-    val testErrKNN = labelAndPredKnn.filter(r => r._1 != r._2).length * 1.0/testData.count()
-    val testErr = labelAndPreds.filter(r => r._1 != r._2).length * 1.0/testData.count()
-    val testErrRF = labeleAndPredsRF.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
-    val testErrLR = labeleAndPredsLR.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
-    val testErrNB = labeleAndPredsNB.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
-    //val testErrSVM = labeleAndPredsSVM.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
-    println("EAC Test Error = " + testErr + " RF test error = " + testErrRF + " KNN test error = " + testErrKNN +
-      "  Logistic Regression test error " + testErrLR
-      + " Naive Bayes test error " + testErrNB /*+ " SVM test error " + testErrSVM*/)
+      val labelAndPreds = knn.getPredAndLabels()
+      val labelAndPredKnn = knn.getPredAndLabelsKNN()
+      //println(labelAndPreds)
+      //println(labelAndPreds.filter(r => r._1 != r._2).count())
+      val testErrKNN = labelAndPredKnn.filter(r => r._1 != r._2).length * 1.0 / testData.count()
+      val testErr = labelAndPreds.filter(r => r._1 != r._2).length * 1.0 / testData.count()
+      val testErrRF = labeleAndPredsRF.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0 / testData.count()
+      //val testErrGB = labeleAndPredsGB.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0 / testData.count()
+      val testErrLR = labeleAndPredsLR.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0 / testData.count()
+      val testErrNB = labeleAndPredsNB.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0 / testData.count()
+      //val testErrSVM = labeleAndPredsSVM.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
+      println("EAC Test Error = " + testErr + " RF test error = " + testErrRF + " KNN test error = " + testErrKNN +
+        "  Logistic Regression test error " + testErrLR
+        + " Naive Bayes test error " + testErrNB /*+ " GB test error " + testErrGB + " SVM test error " + testErrSVM*/)
 
+      pw.write(testErr + " " + testErrRF + " " + testErrKNN + " " + testErrLR + " " + testErrNB /*+ " " + testErrGB*/)
+    }
+    pw.close
     //val testErrRF = labeleAndPredsRF.filter(r => r._1 != r._2).count().asInstanceOf[Int] * 1.0/testData.count()
     //println(testErrRF)
     //println("Learned classification forest model:\n" + model.toDebugString)

@@ -59,4 +59,6 @@ class BalanceReader extends Reader{
   override def categoricalFeaturesInfo: Map[Int, Int] = Map[Int, Int]((0,5),(1,5),(2,5),(3,5))
 
   override def numericalFeaturesInfo: Map[Int, Double] = Map[Int, Double]()
+
+  override def dataSchema: String = "class left-weight left-distance right-weight right-distance"
 }
