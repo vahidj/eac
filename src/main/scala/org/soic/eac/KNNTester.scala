@@ -11,7 +11,7 @@ import org.apache.spark.mllib.tree.{GradientBoostedTrees, RandomForest}
 import org.apache.spark.mllib.tree.configuration.BoostingStrategy
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.{Row, SQLContext}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
@@ -49,13 +49,22 @@ object KNNTester {
     //val readr= new carReader // new adultReader
     val readr = new CreditReader
     val indexed = readr.Indexed(filePathCredit /*filePathBalance*//*filePathCar*/ /*schemaStringBalance*/ /*schemaStringCar*/,sc)
-    val transformed = readr.DFTransformed(indexed)
-    //val output = readr.Output(indexed)
+    var transformed = readr.DFTransformed(indexed)
+    val output = readr.Output(indexed)
+    val sqlContext = new org.apache.spark.sql.SQLContext(sc)
 
     val pw = new PrintWriter(new File("results_Balance.txt"))
     for (i <- 0 until 1) {
       val splits = transformed.randomSplit(Array(0.7, 0.3))
       val (trainingData, testData) = (splits(0), splits(1))
+      val schema = StructType(readr.dataSchema.split(" ").zipWithIndex.map
+        {case (fieldName, i) =>
+      StructField(fieldName, DoubleType, true)})
+      sqlContext.createDataFrame(trainingData.map(r => {
+        val ro = r.features.toArray :+ r.label
+        Row(ro.flatten)
+      }), schema)
+
       //val numClasses = 4
       //val categoricalFeaturesInfo = Map[Int, Int]((0,4),(1,4),(2,4),(3,3),(4,3),(5,3))
       val numTrees = 100 // Use more in practice.
