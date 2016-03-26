@@ -47,13 +47,13 @@ object KNNTester {
     val schemaStringBankruptcy = "industrial_risk management_risk financial_flexibility credibility competitiveness operating_risk class"
     val schemaStringCredit = "a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16"
     //val readr= new carReader // new adultReader
-    val readr = new CreditReader
-    val indexed = readr.Indexed(filePathCredit /*filePathBalance*//*filePathCar*/ /*schemaStringBalance*/ /*schemaStringCar*/,sc)
+    val readr = new CarReader
+    val indexed = readr.Indexed(filePathCar /*filePathBalance*//*filePathCar*/ /*schemaStringBalance*/ /*schemaStringCar*/,sc)
     var transformed = readr.DFTransformed(indexed)
     //val output = readr.Output(indexed)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
 
-    val pw = new PrintWriter(new File("results_Balance.txt"))
+    val pw = new PrintWriter(new File("results_carEval.txt"))
     for (i <- 0 until 1) {
       val splits = transformed.randomSplit(Array(0.7, 0.3))
       val (trainingData, testData) = (splits(0), splits(1))
@@ -68,7 +68,7 @@ object KNNTester {
       val rf = new RandomForestClassifier()
       val paramGrid_rf= new ParamGridBuilder().addGrid(rf.numTrees, Array(2,5)).addGrid(rf.maxDepth, Array(2,4))
       .addGrid(rf.maxBins, Array(120)).addGrid(rf.impurity, Array("entropy", "gini")).build()
-      val nfolds: Int = 20
+      val nfolds: Int = 10
       val cv_rf  = new CrossValidator().setEstimator(rf).setEvaluator(new MulticlassClassificationEvaluator())
       .setEstimatorParamMaps(paramGrid_rf)
       .setEstimatorParamMaps(paramGrid_rf)
