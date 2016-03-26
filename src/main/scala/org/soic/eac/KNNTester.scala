@@ -65,13 +65,52 @@ object KNNTester {
         Row(ro)
       }), schema)
 
+      val rf = new RandomForestClassifier()
+      val paramGrid_rf= new ParamGridBuilder().addGrid(rf.numTrees, Array(2,5)).addGrid(rf.maxDepth, Array(2,4))
+      .addGrid(rf.maxBins, Array(120)).addGrid(rf.impurity, Array("entropy", "gini")).build()
+      val nfolds: Int = 20
+      val cv_rf  = new CrossValidator().setEstimator(rf).setEvaluator(new MulticlassClassificationEvaluator())
+      .setEstimatorParamMaps(paramGrid_rf)
+      .setEstimatorParamMaps(paramGrid_rf)
+      .setNumFolds(nfolds)
+      
+      val cvModel_rf= cv_rf.fit(output)
+      val MaxDepth= cvModel_rf.getEstimatorParamMaps
+           .zip(cvModel_rf.avgMetrics)
+           .maxBy(_._2)
+           ._1.getOrElse(rf.maxDepth, 0)
+      
+      val NumTrees= cvModel_rf.getEstimatorParamMaps
+           .zip(cvModel_rf.avgMetrics)
+           .maxBy(_._2)
+           ._1.getOrElse(rf.numTrees, 0)
+      
+      val MaxBins= cvModel_rf.getEstimatorParamMaps
+           .zip(cvModel_rf.avgMetrics)
+           .maxBy(_._2)
+           ._1.getOrElse(rf.maxBins, 0)
+      
+      val Impurity= cvModel_rf.getEstimatorParamMaps
+           .zip(cvModel_rf.avgMetrics)
+           .maxBy(_._2)
+           ._1.getOrElse(rf.impurity, "null")
+      val featureSubsetStrategy = "auto"  
+      val model_rf = RandomForest.trainClassifier(trainingData.toJavaRDD(),
+        readr.numberOfClasses, readr.categoricalFeaturesInfo, NumTrees, featureSubsetStrategy, Impurity, MaxDepth, MaxBins, 10)
+   
+           
+      println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+      println("Random Forest Best Params\n"+ "max dept" +MaxDepth+ "max bins\n"+ MaxBins+ "impurity\n"+ Impurity)
+      
+      
+
       //val numClasses = 4
       //val categoricalFeaturesInfo = Map[Int, Int]((0,4),(1,4),(2,4),(3,3),(4,3),(5,3))
-      val numTrees = 100 // Use more in practice.
-      val featureSubsetStrategy = "auto" // Let the algorithm choose.
-      val impurity = "gini"
-      val maxDepth = 5
-      val maxBins = 32
+      //val numTrees = 100 // Use more in practice.
+      //val featureSubsetStrategy = "auto" // Let the algorithm choose.
+     // val impurity = "gini"
+     // val maxDepth = 5
+     // val maxBins = 32
 
       //trainingData.saveAsTextFile("train")
       //testData.saveAsTextFile("test")
@@ -80,7 +119,7 @@ object KNNTester {
       //tmp.foreach(r => println(r.toString))
       //println("+++++++++++++++++++++++++++++++++++" + tmp.toString())
 
-      val nfolds: Int = 20
+     // val nfolds: Int = 20
       val knn = new EAC(7, 7, 7, trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo)
       //val neighbors = testData.zipWithIndex().map{case (k, v) => (v, k)}
       //  .map(r => (r._1.asInstanceOf[Int], knn.getSortedNeighbors(r._2.features)))
@@ -98,8 +137,8 @@ object KNNTester {
       //  .setEstimatorParamMaps(paramGrid)
       //  .setNumFolds(nfolds)
 
-      val model = RandomForest.trainClassifier(trainingData.toJavaRDD(),
-        readr.numberOfClasses, readr.categoricalFeaturesInfo, numTrees, featureSubsetStrategy, impurity, maxDepth, maxBins, 10)
+     // val model = RandomForest.trainClassifier(trainingData.toJavaRDD(),
+      //  readr.numberOfClasses, readr.categoricalFeaturesInfo, numTrees, featureSubsetStrategy, impurity, maxDepth, maxBins, 10)
 
       var boostingStrategy = BoostingStrategy.defaultParams("Classification")
       boostingStrategy.setNumIterations(3)
@@ -140,7 +179,7 @@ object KNNTester {
       //val labelAndPreds = knn.getPredAndLabels()
       //println(testData.count().asInstanceOf[Int])
       val labeleAndPredsRF = testData.map {
-        point => val prediction = model.predict(point.features)
+        point => val prediction = model_rf.predict(point.features)
           (point.label, prediction)
       }
 
