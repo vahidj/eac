@@ -50,7 +50,7 @@ object KNNTester {
     val readr = new CreditReader
     val indexed = readr.Indexed(filePathCredit /*filePathBalance*//*filePathCar*/ /*schemaStringBalance*/ /*schemaStringCar*/,sc)
     var transformed = readr.DFTransformed(indexed)
-    val output = readr.Output(indexed)
+    //val output = readr.Output(indexed)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
 
     val pw = new PrintWriter(new File("results_Balance.txt"))
@@ -60,9 +60,9 @@ object KNNTester {
       val schema = StructType(readr.dataSchema.split(" ").zipWithIndex.map
         {case (fieldName, i) =>
       StructField(fieldName, DoubleType, true)})
-      sqlContext.createDataFrame(trainingData.map(r => {
+      val output = sqlContext.createDataFrame(trainingData.map(r => {
         val ro = r.features.toArray :+ r.label
-        Row(ro.flatten)
+        Row(ro)
       }), schema)
 
       //val numClasses = 4
