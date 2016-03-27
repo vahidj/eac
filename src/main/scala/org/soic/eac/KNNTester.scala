@@ -62,12 +62,15 @@ object KNNTester {
         StructField("label", DoubleType, true),
       StructField("features", VectorUDT, true)
       ])*/
-      val schema = StructType("features label".split(" ").zipWithIndex.map
+      val schema = StructType("features initial_label".split(" ").zipWithIndex.map
         {case (fieldName, i) =>
       if (i==0) StructField(fieldName, new VectorUDT(), true) else StructField(fieldName, DoubleType, true) })
-      val output = sqlContext.createDataFrame(trainingData.map(r => {
+      val output2 = sqlContext.createDataFrame(trainingData.map(r => {
         Row(r.features, r.label)
       }), schema)
+
+      var indexer = new StringIndexer().setInputCol("initial_label").setOutputCol("label").fit(output2)
+      var output = indexer.transform(output2)
 
       val rf = new RandomForestClassifier()
       val paramGrid_rf= new ParamGridBuilder().addGrid(rf.numTrees, Array(2,5)).addGrid(rf.maxDepth, Array(2,4))
