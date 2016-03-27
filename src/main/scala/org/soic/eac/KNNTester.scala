@@ -57,12 +57,11 @@ object KNNTester {
     for (i <- 0 until 1) {
       val splits = transformed.randomSplit(Array(0.7, 0.3))
       val (trainingData, testData) = (splits(0), splits(1))
-      val schema = StructType(readr.dataSchema.split(" ").zipWithIndex.map
+      val schema = StructType("features label".split(" ").zipWithIndex.map
         {case (fieldName, i) =>
       StructField(fieldName, DoubleType, true)})
       val output = sqlContext.createDataFrame(trainingData.map(r => {
-        val ro = r.features.toArray :+ r.label
-        Row(ro(0),ro(1),ro(2))
+        Row(r.features.toArray, r.label)
       }), schema)
 
       val rf = new RandomForestClassifier()
