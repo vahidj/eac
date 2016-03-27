@@ -17,6 +17,7 @@ import org.apache.spark.sql.{Row, SQLContext}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.soic.eac.EACConfig._
 import java.io._
+import org.apache.spark.mllib.linalg.VectorUDT
 
 /**
   * Created by vjalali on 2/27/16.
@@ -57,9 +58,13 @@ object KNNTester {
     for (i <- 0 until 1) {
       val splits = transformed.randomSplit(Array(0.7, 0.3))
       val (trainingData, testData) = (splits(0), splits(1))
+      /*val schema = StructType([
+        StructField("label", DoubleType, true),
+      StructField("features", VectorUDT, true)
+      ])*/
       val schema = StructType("features label".split(" ").zipWithIndex.map
         {case (fieldName, i) =>
-      StructField(fieldName, DoubleType, true)})
+      if (i==0) StructField(fieldName, new VectorUDT(), true) else StructField(fieldName, DoubleType, true) })
       val output = sqlContext.createDataFrame(trainingData.map(r => {
         Row(r.features, r.label)
       }), schema)
