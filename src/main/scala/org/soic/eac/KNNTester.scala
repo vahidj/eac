@@ -62,7 +62,7 @@ object KNNTester {
       StructField(fieldName, DoubleType, true)})
       val output = sqlContext.createDataFrame(trainingData.map(r => {
         val ro = r.features.toArray :+ r.label
-        Row(ro)
+        Row(ro(0),ro(1),ro(2))
       }), schema)
 
       val rf = new RandomForestClassifier()
