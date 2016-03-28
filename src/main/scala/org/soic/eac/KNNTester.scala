@@ -55,7 +55,7 @@ object KNNTester {
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
 
     val pw = new PrintWriter(new File("results_carEval.txt"))
-    for (i <- 0 until 1) {
+    for (i <- 0 until 10) {
       val splits = transformed.randomSplit(Array(0.7, 0.3))
       val (trainingData, testData) = (splits(0), splits(1))
       /*val schema = StructType([
@@ -109,9 +109,9 @@ object KNNTester {
       println("Random Forest Best Params\n"+ "max dept" +MaxDepth+ "max bins\n"+ MaxBins+ "impurity\n"+ Impurity)
       
 
-      val neighbor_nos = List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-      val rule_nos = List(1, 2, 3, 4, 5 ,6, 7, 8, 9, 10)
-      val rule_learning_nos = List(10, 20, 30)
+      val neighbor_nos = List(1, 3, 5, 6, 10)
+      val rule_nos = List(1,3, 5 ,6, 10)
+      val rule_learning_nos = List(10, 20)
       var best_params = List(0, 0 , 0)
       var min_err = 100.0
       neighbor_nos.foreach(a1 => {
@@ -120,7 +120,7 @@ object KNNTester {
 
 
             val cv_splits = MLUtils.kFold(trainingData, 10, 10)
-            println(cv_splits.toString)
+            println(cv_splits.foreach(r => println("r " + r.toString())))
             cv_splits.zipWithIndex.foreach{case ((cv_training, cv_validation), splitIndex) =>
                val cv_eac = new EAC(a1, a2, a3, cv_training, cv_validation, readr.categoricalFeaturesInfo,
                  readr.numericalFeaturesInfo)
@@ -251,7 +251,7 @@ object KNNTester {
       println("EAC Test Error = " + testErr + " RF test error = " + testErrRF + " KNN test error = " + testErrKNN +
         "  Logistic Regression test error " + testErrLR
         + " Naive Bayes test error " + testErrNB /*+ " GB test error " + testErrGB + " SVM test error " + testErrSVM*/)
-
+      pw.write(best_params.toString() + "\n")
       pw.write(testErr + " " + testErrRF + " " + testErrKNN + " " + testErrLR + " " + testErrNB /*+ " " + testErrGB*/)
     }
     pw.close
