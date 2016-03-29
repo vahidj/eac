@@ -48,13 +48,13 @@ object KNNTester {
     val schemaStringBankruptcy = "industrial_risk management_risk financial_flexibility credibility competitiveness operating_risk class"
     val schemaStringCredit = "a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16"
     //val readr= new carReader // new adultReader
-    val readr = new CarReader
-    val indexed = readr.Indexed(filePathCar /*filePathBalance*//*filePathCar*/ /*schemaStringBalance*/ /*schemaStringCar*/,sc)
+    val readr = new BalanceReader
+    val indexed = readr.Indexed(filePathBalance /*filePathBalance*//*filePathCar*/ /*schemaStringBalance*/ /*schemaStringCar*/,sc)
     var transformed = readr.DFTransformed(indexed)
     //val output = readr.Output(indexed)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
 
-    val pw = new PrintWriter(new File("results_carEval.txt"))
+    val pw = new PrintWriter(new File("results_balance.txt"))
     for (i <- 0 until 1) {
       val splits = transformed.randomSplit(Array(0.7, 0.3))
       val (trainingData, testData) = (splits(0), splits(1))
@@ -253,6 +253,7 @@ object KNNTester {
       println("EAC Test Error = " + testErr + " RF test error = " + testErrRF + " KNN test error = " + testErrKNN +
         "  Logistic Regression test error " + testErrLR
         + " Naive Bayes test error " + testErrNB /*+ " GB test error " + testErrGB + " SVM test error " + testErrSVM*/)
+      pw.write(NumTrees + " " + featureSubsetStrategy + " " + Impurity + " " + MaxDepth + " " + MaxBins + "\n")
       pw.write(best_params.toString() + "\n")
       pw.write(testErr + " " + testErrRF + " " + testErrKNN + " " + testErrLR + " " + testErrNB /*+ " " + testErrGB*/)
     }
