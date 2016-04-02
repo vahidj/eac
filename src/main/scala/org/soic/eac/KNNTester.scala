@@ -48,13 +48,13 @@ object KNNTester {
     val schemaStringBankruptcy = "industrial_risk management_risk financial_flexibility credibility competitiveness operating_risk class"
     val schemaStringCredit = "a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16"
     //val readr= new carReader // new adultReader
-    val readr = new BalanceReader
-    val indexed = readr.Indexed(filePathBalance /*filePathBalance*//*filePathCar*/ /*schemaStringBalance*/ /*schemaStringCar*/,sc)
+    val readr = new CreditReader
+    val indexed = readr.Indexed(filePathCredit /*filePathBalance*//*filePathCar*/ /*schemaStringBalance*/ /*schemaStringCar*/,sc)
     var transformed = readr.DFTransformed(indexed)
     //val output = readr.Output(indexed)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
 
-    val pw = new PrintWriter(new File("results_balance.txt"))
+    val pw = new PrintWriter(new File("results_bc.txt"))
     for (i <- 0 until 1) {
       val splits = transformed.randomSplit(Array(0.7, 0.3))
       val (trainingData, testData) = (splits(0), splits(1))
@@ -73,7 +73,7 @@ object KNNTester {
       var output = indexer.transform(output2)
 
       val rf = new RandomForestClassifier()
-      val paramGrid_rf= new ParamGridBuilder().addGrid(rf.numTrees, Array(2,5)).addGrid(rf.maxDepth, Array(2,4))
+      val paramGrid_rf= new ParamGridBuilder().addGrid(rf.numTrees, Array(2,5,10,20,100)).addGrid(rf.maxDepth, Array(2,4,6,8))
       .addGrid(rf.maxBins, Array(120)).addGrid(rf.impurity, Array("entropy", "gini")).build()
       val nfolds: Int = 10
       val cv_rf  = new CrossValidator().setEstimator(rf).setEvaluator(new MulticlassClassificationEvaluator())
@@ -109,9 +109,9 @@ object KNNTester {
       println("Random Forest Best Params\n"+ "max dept" +MaxDepth+ "max bins\n"+ MaxBins+ "impurity\n"+ Impurity)
       
 
-      val neighbor_nos = List(1, 5, 10)
-      val rule_nos = List(1, 5, 10)
-      val rule_learning_nos = List(20)
+      val neighbor_nos = List(1, 2, 3, 5, 10)
+      val rule_nos = List(1, 2, 3, 5, 10)
+      val rule_learning_nos = List(10, 20)
       var best_params = List(0, 0 , 0)
       var min_err = 100.0
       neighbor_nos.foreach(a1 => {

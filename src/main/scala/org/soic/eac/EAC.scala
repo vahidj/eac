@@ -82,7 +82,7 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
         }
       }
       else{
-        distance = distance + Math.abs((f1._1 - f1._2) - (f2._1 - f2._2))/(4 * numericalFeaturesInfo(featureCounter))
+        distance = distance + math.min(1, Math.abs((f1._1 - f1._2) - (f2._1 - f2._2))/(4 * numericalFeaturesInfo(featureCounter)))
       }
       featureCounter += 1
     })
@@ -126,7 +126,7 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
         }
       }
       else
-        distance = distance + math.abs(f1-f2)/(4 * numericalFeaturesInfo(featureCounter))
+        distance = distance + math.min(1, math.abs(f1-f2)/(4 * numericalFeaturesInfo(featureCounter)))
       featureCounter += 1
     })
 	//println(test)
@@ -329,12 +329,14 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
       }
       else
       {
-        featureStat =  featureStat ::: List()
-        featureClassStat = featureClassStat ::: List()
+        featureStat =  featureStat ::: List(Map[Double,Long]())
+        featureClassStat = featureClassStat ::: List(Map[(Double, Double), Long]())
       }
     }
 
+
     //println(featureStat.toString())
+	//System.exit(0)
     //println(featureClassStat.toString())
     /*this.dataWithIndex = data.zipWithIndex().map{case (k,v) => (v, k)}
     //key: class value, value: how many records have this class value
@@ -418,7 +420,7 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
     }
 
     //println(mizan.toString())
-
+	//System.exit(0)
     /*println("=================================STARTED building distances=======================")
     //the following section generates distances between all pairs of cases in the underlying domain
     for (i <- 0 until dataWithIndex.count().asInstanceOf[Int]){
@@ -529,6 +531,8 @@ class EAC(private var k: Int, private val rno: Int, private val ruleRadius: Int,
       ruleFeatureCounter += 1
     }
 
+	//println(ruleMizan.toString)
+	//System.exit(0)
     //ruleMizan(0).count()
     //println(ruleMizan.toString())
     //System.exit(0)
