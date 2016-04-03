@@ -61,4 +61,6 @@ class BalanceReader extends Reader{
   override def numericalFeaturesInfo: Map[Int, Double] = Map[Int, Double]()
 
   override def dataSchema: String = "class left-weight left-distance right-weight right-distance"
+
+  override def inputFileName: String = "balance/balance-scale.data"
 }

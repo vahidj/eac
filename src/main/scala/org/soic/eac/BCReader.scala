@@ -84,4 +84,6 @@ class BCReader extends Reader{
   override def numericalFeaturesInfo: Map[Int, Double] = Map[Int, Double]()
 
   override def dataSchema: String = "clump_thickness u_cell_size u_cell_shape marginal_adhesion single_epithelial bare_nuclei bland_chromatin normal_nucleoli mitoses class"
+
+  override def inputFileName: String = "breastcancer/bcCleaned.data"
 }

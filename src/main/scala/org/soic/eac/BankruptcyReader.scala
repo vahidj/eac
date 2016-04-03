@@ -45,7 +45,7 @@ class BankruptcyReader extends Reader{
     val rawData = sc.textFile(FilePath)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
     val schema = StructType(dataSchema.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
-    val rowRDD = rawData.map(_.split(",")).map(p => Row(p(0), p(1), p(2), p(3), p(4), p(5), p(6)))
+    val rowRDD = rawData.map(_.split(",")).map(p => Row(p(0), p(1), p(2), p(3), p(4), p(5)))
     val carDataFrame = sqlContext.createDataFrame(rowRDD, schema)
     var indexer = new StringIndexer().setInputCol("industrial_risk").setOutputCol("industrial_riskIndex").fit(carDataFrame)
     var indexed = indexer.transform(carDataFrame)
@@ -71,4 +71,6 @@ class BankruptcyReader extends Reader{
   override def numericalFeaturesInfo: Map[Int, Double] = Map[Int, Double]()
 
   override def dataSchema: String = "industrial_risk management_risk financial_flexibility credibility competitiveness operating_risk class"
+
+  override def inputFileName: String = "bankruptcy/bankruptcy.data"
 }

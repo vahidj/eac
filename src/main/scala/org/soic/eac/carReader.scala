@@ -69,4 +69,6 @@ class CarReader extends Reader {
   override def numericalFeaturesInfo: Map[Int, Double] = Map[Int, Double]()
 
   override def dataSchema: String = "buying maint doors persons lug_boot safety acceptability"
+
+  override def inputFileName: String = "careval/car.data"
 }

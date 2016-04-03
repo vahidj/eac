@@ -49,7 +49,7 @@ object KNNTester {
     val schemaStringCredit = "a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16"
     //val readr= new carReader // new adultReader
     val readr = new CreditReader
-    val indexed = readr.Indexed(filePathCredit /*filePathBalance*//*filePathCar*/ /*schemaStringBalance*/ /*schemaStringCar*/,sc)
+    val indexed = readr.Indexed(EACConfig.BASEPATH + "dataset/" + readr.inputFileName /*filePathBalance*//*filePathCar*/ /*schemaStringBalance*/ /*schemaStringCar*/,sc)
     var transformed = readr.DFTransformed(indexed)
     //val output = readr.Output(indexed)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
