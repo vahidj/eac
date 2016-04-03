@@ -109,9 +109,9 @@ object KNNTester {
       println("Random Forest Best Params\n"+ "max dept" +MaxDepth+ "max bins\n"+ MaxBins+ "impurity\n"+ Impurity)
       
 
-      val neighbor_nos = List(1, 2, 3, 5, 10)
+      /*val neighbor_nos = List(1, 2, 3, 5, 10)
       val rule_nos = List(1, 2, 3, 5, 10)
-      val rule_learning_nos = List(10, 20)
+      val rule_learning_nos = List(5, 10, 20)
       var best_params = List(0, 0 , 0)
       var min_err = 100.0
       neighbor_nos.foreach(a1 => {
@@ -137,7 +137,7 @@ object KNNTester {
 			//System.exit(0)
           })
         })
-      })
+      })*/
 
       //val numClasses = 4
       //val categoricalFeaturesInfo = Map[Int, Int]((0,4),(1,4),(2,4),(3,3),(4,3),(5,3))
@@ -155,6 +155,7 @@ object KNNTester {
       //println("+++++++++++++++++++++++++++++++++++" + tmp.toString())
 
      // val nfolds: Int = 20
+	  val best_params = List(10, 10, 10)
       val knn = new EAC(best_params(0), best_params(1), best_params(2),
        trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo)
       //val neighbors = testData.zipWithIndex().map{case (k, v) => (v, k)}

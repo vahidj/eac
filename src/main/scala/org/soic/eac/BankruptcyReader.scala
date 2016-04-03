@@ -45,7 +45,7 @@ class BankruptcyReader extends Reader{
     val rawData = sc.textFile(FilePath)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
     val schema = StructType(dataSchema.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
-    val rowRDD = rawData.map(_.split(",")).map(p => Row(p(0), p(1), p(2), p(3), p(4), p(5)))
+    val rowRDD = rawData.map(_.split(",")).map(p => Row(p(0), p(1), p(2), p(3), p(4), p(5), p(6)))
     val carDataFrame = sqlContext.createDataFrame(rowRDD, schema)
     var indexer = new StringIndexer().setInputCol("industrial_risk").setOutputCol("industrial_riskIndex").fit(carDataFrame)
     var indexed = indexer.transform(carDataFrame)
