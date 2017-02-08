@@ -50,7 +50,7 @@ object KNNTester {
     val schemaStringBankruptcy = "industrial_risk management_risk financial_flexibility credibility competitiveness operating_risk class"
     val schemaStringCredit = "a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16"
     //val readr= new carReader // new adultReader
-    val readr = new CreditReader
+    val readr = new CarReader
     val indexed = readr.Indexed(EACConfig.BASEPATH + "dataset/" + readr.inputFileName /*filePathBalance*//*filePathCar*/ /*schemaStringBalance*/ /*schemaStringCar*/,sc)
     var transformed = readr.DFTransformed(indexed)
     //val output = readr.Output(indexed)
@@ -131,7 +131,7 @@ object KNNTester {
       }
       else if (method.equals("eac")){
         val best_params = List(10, 10, 10)
-        val knn = new EACLsh(best_params(0), best_params(1), best_params(2),
+        val knn = new EAC(best_params(0), best_params(1), best_params(2),
             trainingData, testData, readr.categoricalFeaturesInfo, readr.numericalFeaturesInfo)
         knn.train()
         val predsAndLabels = knn.getPredAndLabels()
